@@ -24,6 +24,7 @@ function getSevernaCount() {
       text = node.nodeValue;
       replacedText = text.replace(
         /Северна Македонија/gi, 'Македонија'
+        ///Северна Македонија/gi, '<span class="s-m accent">Северна</span> Македонија'
       ).replace(
         /С\. Македонија/gi, 'Македонија'
       );
@@ -32,11 +33,21 @@ function getSevernaCount() {
       }
 
       count++;
-      element.replaceChild(document.createTextNode(replacedText), node);
+      element.replaceChild(getNewChild(replacedText), node);
     }
   }
 
   return count;
+}
+
+function getNewChild(text) {
+  if (text.indexOf('class="s-m') === -1) {
+    return document.createTextNode(text);
+  }
+
+  const element = document.createElement('span');
+  element.innerHTML = text;
+  return element;
 }
 
 function log(...args) {
