@@ -1,0 +1,28 @@
+{
+  "manifest_version": 2,
+  "version": "0.1",
+  "name": "Само Македонија",
+  "description": "Ги отстранува сите појави на „Северна“ од веб страниците кои ги посетувате.",
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [{
+    "matches": ["<all_urls>"],
+    "js": ["content.js"]
+  }],
+  "browser_action": {
+    "default_title": "Само Македонија! 👌",
+    "default_icon": {
+      "16": "toolbar_icon16.png",
+      "32": "toolbar_icon32.png",
+      "48": "toolbar_icon48.png",
+      "128": "toolbar_icon128.png"
+    }
+  },
+  "icons": {
+    "16": "extension_icon16.png",
+    "32": "extension_icon32.png",
+    "48": "extension_icon48.png",
+    "128": "extension_icon128.png"
+  }
+}
