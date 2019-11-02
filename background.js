@@ -1,3 +1,5 @@
+const counters = {};
+
 chrome.browserAction.onClicked.addListener(() => chrome.tabs.query(
   {active: true, currentWindow: true},
   tabs => chrome.tabs.sendMessage(
@@ -6,9 +8,16 @@ chrome.browserAction.onClicked.addListener(() => chrome.tabs.query(
   ))
 );
 
-chrome.runtime.onMessage.addListener(request => {
-  request.count !== undefined && updateBadge(request.count);
+chrome.runtime.onMessage.addListener((message, sender) => {
+  if (message.count !== undefined) {
+    counters[sender.tab.id] = message.count;
+    updateBadge(message.count);
+  }
 });
+
+chrome.tabs.onActivated.addListener(
+  activeInfo => updateBadge(counters[activeInfo.tabId] || 0)
+);
 
 function updateBadge(count) {
   if (count === 0) {
