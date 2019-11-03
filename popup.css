@@ -1,4 +1,18 @@
-.logo {
-  width: 48px;
-  margin: 8px;
+body {
+  width: 256px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+}
+
+.header .logo {
+  width: 32px;
+}
+
+.header .label {
+  font-size: 1rem;
+  font-weight: 600;
+  padding-left: 8px;
 }
