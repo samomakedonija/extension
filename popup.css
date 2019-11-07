@@ -1,18 +1,43 @@
 body {
   width: 256px;
+  background: #dddddd;
 }
 
 .header {
   display: flex;
   align-items: center;
+  justify-content: center;
+  margin-top: 4px;
+  margin-bottom: 12px;
 }
 
 .header .logo {
-  width: 32px;
+  width: 16px;
 }
 
 .header .label {
   font-size: 1rem;
-  font-weight: 600;
   padding-left: 8px;
+}
+
+.hunted {
+  text-align: center;
+  background: #ffdc00;
+  color: #665800;
+  font-weight: 800;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 4px;
+}
+
+.details {
+  width: 100%;
+  display: flex;
+}
+
+.details .total {
+  background: lightblue;
+  flex-grow: 1;
+  text-align: right;
 }
