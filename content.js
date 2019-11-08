@@ -1,17 +1,28 @@
-chrome.runtime.onMessage.addListener(request => {
-  if (request.message === 'show_popup') {
-    log('show popup');
+chrome.runtime.onMessage.addListener(message => {
+  if (message.action === 'toggle-erasing') {
+    document.body.querySelectorAll('.s-m').forEach(
+      node => node.classList.toggle('s-m-accent')
+    );
+  }
+
+  if (message.action === 'toggle-extension') {
+    log(message.action);
   }
 });
 
-chrome.runtime.sendMessage({count: getSevernaCount()});
+let count = getSevernaCount();
+chrome.runtime.sendMessage({count: count});
+observeAddedContent(addedElements => {
+  count += getSevernaCount(addedElements);
+  chrome.runtime.sendMessage({count: count});
+});
 
-function getSevernaCount() {
+function getSevernaCount(elements) {
   let
     element, node, text, replacedText, i, j,
-    count = 0,
-    elements = document.getElementsByTagName('*');
+    count = 0;
 
+  elements = elements || document.body.getElementsByTagName('*');
   for (i = 0; i < elements.length; i++) {
     element = elements[i];
 
@@ -23,8 +34,7 @@ function getSevernaCount() {
 
       text = node.nodeValue;
       replacedText = text.replace(
-        /Северна Македонија/gi, 'Македонија'
-        ///Северна Македонија/gi, '<span class="s-m accent">Северна</span> Македонија'
+        /Северна Македонија/gi, '<span class="s-m s-m-hidden">Северна</span> Македонија'
       ).replace(
         /С\. Македонија/gi, 'Македонија'
       );
@@ -48,6 +58,16 @@ function getNewChild(text) {
   const element = document.createElement('span');
   element.innerHTML = text;
   return element;
+}
+
+function observeAddedContent(addedElementsCb) {
+  new MutationObserver(mutations => {
+    const elements = [];
+    mutations.forEach(mutation => mutation.addedNodes.forEach(
+      node => node instanceof HTMLElement && elements.push(...node.getElementsByTagName('*'))
+    ));
+    addedElementsCb(elements);
+  }).observe(document.body, {childList: true, subtree: true});
 }
 
 function log(...args) {

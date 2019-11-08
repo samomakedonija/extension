@@ -1,13 +1,5 @@
 const counters = {};
 
-chrome.browserAction.onClicked.addListener(() => chrome.tabs.query(
-  {active: true, currentWindow: true},
-  tabs => chrome.tabs.sendMessage(
-    tabs[0].id,
-    {message: 'show_popup'}
-  ))
-);
-
 chrome.runtime.onMessage.addListener((message, sender) => {
   if (message.count !== undefined) {
     counters[sender.tab.id] = message.count;

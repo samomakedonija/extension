@@ -1,5 +1,10 @@
-.s-m.accent {
-  color: red;
-  font-weight: 600;
+.s-m.s-m-hidden {
+  display: none;
+}
+
+.s-m.s-m-accent {
+  display: initial;
+  background: red;
+  color: white;
   text-decoration: line-through;
 }

@@ -1,18 +1,152 @@
+:root {
+  --sm-color-red: #b80000;
+  --sm-color-yellow: #fdb515;
+  --sm-color-dark: #333333;
+  --sm-color-silver: #ececec;
+
+  --sm-dim: 10px;
+  --sm-dim-double: calc(var(--sm-dim) * 2);
+  --sm-dim-and-half: calc(var(--sm-dim) * 1.5);
+  --sm-dim-half: calc(var(--sm-dim) / 2);
+}
+
 body {
-  width: 256px;
+  width: 300px;
+  margin: 0;
+  font-size: 15px;
+  color: var(--sm-color-dark);
 }
 
 .header {
   display: flex;
   align-items: center;
+  padding: var(--sm-dim);
 }
 
 .header .logo {
-  width: 32px;
+  width: 24px;
 }
 
 .header .label {
-  font-size: 1rem;
-  font-weight: 600;
-  padding-left: 8px;
+  position: absolute;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-size: inherit;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: var(--sm-color-red);
+}
+
+.header .label span {
+  color: var(--sm-color-yellow);
+}
+
+.hunted-header {
+  text-transform: uppercase;
+  margin-top: var(--sm-dim);
+  padding: var(--sm-dim-half) var(--sm-dim);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.hunted-body {
+  display: flex;
+  padding: 0 var(--sm-dim);
+  min-height: 27px;
+}
+
+.hunted-body.tall {
+  min-height: 80px;
+}
+
+.hunted-tile {
+  flex-basis: 50%;
+  flex-grow: 0;
+  background: var(--sm-color-silver);
+  padding: var(--sm-dim-half) var(--sm-dim);
+  text-align: right;
+  border-left-width: var(--sm-dim-half);
+  border-left-style: solid;
+  border-left-color: var(--sm-color-yellow);
+}
+
+.hunted-tile.disabled {
+  border-left-color: var(--sm-color-red);
+}
+
+.hunted-tile.single {
+  flex-basis: 100%;
+}
+
+.hunted-tile.single:nth-child(1) {
+  margin-right: 0;
+}
+
+.hunted-tile:nth-child(1) {
+  margin-right: var(--sm-dim-half);
+}
+
+.hunted-tile:nth-child(2) {
+  margin-left: var(--sm-dim-half);
+}
+
+.hunted-count {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.hunted-label {
+  font-size: 10px;
+  padding-right: 1px;
+}
+
+.actions {
+  margin-top: var(--sm-dim-and-half);
+}
+
+button {
+  position: relative;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  padding: var(--sm-dim);
+  letter-spacing: 0.5px;
+  background: transparent;
+  font-size: inherit;
+  text-decoration: none;
+  color: black;
+}
+
+button:after {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 9px;
+  right: var(--sm-dim);
+  width: var(--sm-dim-double);
+  height: var(--sm-dim-double);
+  background-size: contain;
+}
+
+button.off:after {
+  background-image: url(check_box_off-24px.svg);
+}
+
+button.on:after {
+  background-image: url(check_box_on-24px.svg);
+}
+
+button:focus {
+  outline: 0;
+}
+
+button:hover {
+  background: #e8e8e8;
+}
+
+button:active {
+  -webkit-text-stroke: 1px;
+  opacity: 0.75;
 }
