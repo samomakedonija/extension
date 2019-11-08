@@ -1,8 +1,12 @@
 chrome.runtime.onMessage.addListener(message => {
-  if (message.action === 'toggleDisplay') {
+  if (message.action === 'toggle-erasing') {
     document.body.querySelectorAll('.s-m').forEach(
       node => node.classList.toggle('s-m-accent')
     );
+  }
+
+  if (message.action === 'toggle-extension') {
+    log(message.action);
   }
 });
 

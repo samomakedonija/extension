@@ -106,6 +106,7 @@ body {
 }
 
 button {
+  position: relative;
   border: none;
   cursor: pointer;
   width: 100%;
@@ -116,6 +117,25 @@ button {
   font-size: inherit;
   text-decoration: none;
   color: black;
+}
+
+button:after {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 9px;
+  right: var(--sm-dim);
+  width: var(--sm-dim-double);
+  height: var(--sm-dim-double);
+  background-size: contain;
+}
+
+button.off:after {
+  background-image: url(check_box_off-24px.svg);
+}
+
+button.on:after {
+  background-image: url(check_box_on-24px.svg);
 }
 
 button:focus {
