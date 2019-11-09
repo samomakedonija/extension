@@ -1,6 +1,8 @@
 let
   counters = {},
-  total = 0;
+  total;
+
+chrome.storage.sync.get(['total'], result => total = result.total || 0);
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'count') {
@@ -20,6 +22,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       current: counters[tabId],
       total: total
     }});
+    !sender.tab.incognito && chrome.storage.sync.set({total: total});
     return;
   }
 
