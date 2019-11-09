@@ -10,11 +10,14 @@ chrome.runtime.onMessage.addListener(message => {
   }
 });
 
-let count = getSevernaCount();
-chrome.runtime.sendMessage({count: count});
+chrome.runtime.sendMessage({action: 'count', data: {
+  initialCount: getSevernaCount()
+}});
 observeAddedContent(addedElements => {
-  count += getSevernaCount(addedElements);
-  chrome.runtime.sendMessage({count: count});
+  const addCount = getSevernaCount(addedElements);
+  addCount > 0 && chrome.runtime.sendMessage({action: 'count', data: {
+    addCount: addCount
+  }});
 });
 
 function getSevernaCount(elements) {
