@@ -21,17 +21,17 @@ chrome.runtime.onMessage.addListener(request => {
 chrome.runtime.sendMessage({action: 'get state'}, state => {
   _autoErasing = state.autoErasing;
   chrome.runtime.sendMessage({action: 'count', data: {
-    initialCount: getSevernaCount(_autoErasing)
+    initialCount: detectNorthisms(_autoErasing)
   }});
   observeAddedContent(addedElements => {
-    const addCount = getSevernaCount(_autoErasing, addedElements);
+    const addCount = detectNorthisms(_autoErasing, addedElements);
     addCount > 0 && chrome.runtime.sendMessage({action: 'count', data: {
       addCount: addCount
     }});
   });
 });
 
-function getSevernaCount(autoErasing, elements) {
+function detectNorthisms(autoErasing, elements) {
   const smClass = `s-m ${autoErasing ? 's-m-hidden' : 's-m-accent'}`;
   let
     element, node, text, replacedText, i, j,
@@ -48,11 +48,7 @@ function getSevernaCount(autoErasing, elements) {
       }
 
       text = node.nodeValue;
-      replacedText = text.replace(
-        /Северна Македонија/gi, getSpan('Северна', 'Македонија')
-      ).replace(
-        /С\. Македонија/gi, getSpan('С.', 'Македонија')
-      );
+      replacedText = replaceNorthisms(text, smClass);
       if (replacedText === text) {
         continue;
       }
@@ -63,9 +59,22 @@ function getSevernaCount(autoErasing, elements) {
   }
 
   return count;
+}
 
-  function getSpan(part1, part2) {
-    return `<span class="${smClass}">${part1}</span> ${part2}`;
+function replaceNorthisms(s, smClass) {
+  return s.replace(
+    /Северна Македонија/gi, getSpan(0, 'Северна', ' Македонија')
+  ).replace(
+    /С\. Македонија/gi, getSpan(0, 'С.', ' Македонија')
+  ).replace(
+    /РСМ/gi, getSpan(1, 'Р', 'С', 'М')
+  ).replace(
+    /North Macedonia/gi, getSpan(0, 'North', ' Macedonia')
+  );
+
+  function getSpan(pos, ...parts) {
+    parts[pos] = `<span class="${smClass}">${parts[pos]}</span>`;
+    return parts.join('');
   }
 }
 
