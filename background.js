@@ -1,8 +1,14 @@
 let
   counters = {},
-  total;
+  total,
+  autoErasing;
 
-chrome.storage.sync.get(['total'], result => total = result.total || 0);
+chrome.storage.sync.get([
+  'total', 'autoErasing'
+], result => {
+  total = result.total || 0;
+  autoErasing = !!result.autoErasing;
+});
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'count') {
@@ -26,17 +32,36 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return;
   }
 
-  if (request.action === 'get counters for tab') {
+  if (request.action === 'set state') {
+    if (request.data.autoErasing !== undefined) {
+      chrome.storage.sync.set({autoErasing: request.data.autoErasing}, () => {
+        autoErasing = request.data.autoErasing;
+        chrome.tabs.query({active: true, currentWindow: true}, tabs => chrome.tabs.sendMessage(
+          tabs[0].id, {action: 'toggle erasing', data: {
+            autoErasing: autoErasing
+          }}
+        ));
+      });
+    }
+
+    return;
+  }
+
+  if (request.action === 'get state') {
     return sendResponse({
-      current: counters[request.data.tabId],
-      total: total
+      current: request.data ? counters[request.data.tabId] : undefined,
+      total: total,
+      autoErasing: autoErasing
     });
   }
 });
 
-chrome.tabs.onActivated.addListener(
-  activeInfo => updateBadge(counters[activeInfo.tabId] || 0)
-);
+chrome.tabs.onActivated.addListener(activeInfo => {
+  updateBadge(counters[activeInfo.tabId] || 0);
+  chrome.tabs.sendMessage(activeInfo.tabId, {action: 'toggle erasing', data: {
+    autoErasing: autoErasing
+  }});
+});
 
 chrome.tabs.onRemoved.addListener(tabId => delete counters[tabId]);
 

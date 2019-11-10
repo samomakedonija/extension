@@ -1,26 +1,38 @@
-chrome.runtime.onMessage.addListener(message => {
-  if (message.action === 'toggle-erasing') {
-    document.body.querySelectorAll('.s-m').forEach(
-      node => node.classList.toggle('s-m-accent')
-    );
+let _autoErasing;
+
+chrome.runtime.onMessage.addListener(request => {
+  if (request.action === 'toggle erasing') {
+    if (_autoErasing === request.data.autoErasing) {
+      return;
+    }
+
+    _autoErasing = request.data.autoErasing;
+    document.body.querySelectorAll('.s-m').forEach(node => {
+      node.classList.toggle('s-m-hidden');
+      node.classList.toggle('s-m-accent');
+    });
   }
 
-  if (message.action === 'toggle-extension') {
-    log(message.action);
+  if (request.action === 'toggle extension') {
+    log(request.action);
   }
 });
 
-chrome.runtime.sendMessage({action: 'count', data: {
-  initialCount: getSevernaCount()
-}});
-observeAddedContent(addedElements => {
-  const addCount = getSevernaCount(addedElements);
-  addCount > 0 && chrome.runtime.sendMessage({action: 'count', data: {
-    addCount: addCount
+chrome.runtime.sendMessage({action: 'get state'}, state => {
+  _autoErasing = state.autoErasing;
+  chrome.runtime.sendMessage({action: 'count', data: {
+    initialCount: getSevernaCount(_autoErasing)
   }});
+  observeAddedContent(addedElements => {
+    const addCount = getSevernaCount(_autoErasing, addedElements);
+    addCount > 0 && chrome.runtime.sendMessage({action: 'count', data: {
+      addCount: addCount
+    }});
+  });
 });
 
-function getSevernaCount(elements) {
+function getSevernaCount(autoErasing, elements) {
+  const smClass = `s-m ${autoErasing ? 's-m-hidden' : 's-m-accent'}`;
   let
     element, node, text, replacedText, i, j,
     count = 0;
@@ -37,9 +49,9 @@ function getSevernaCount(elements) {
 
       text = node.nodeValue;
       replacedText = text.replace(
-        /Северна Македонија/gi, '<span class="s-m s-m-hidden">Северна</span> Македонија'
+        /Северна Македонија/gi, getSpan('Северна', 'Македонија')
       ).replace(
-        /С\. Македонија/gi, 'Македонија'
+        /С\. Македонија/gi, getSpan('С.', 'Македонија')
       );
       if (replacedText === text) {
         continue;
@@ -51,6 +63,10 @@ function getSevernaCount(elements) {
   }
 
   return count;
+
+  function getSpan(part1, part2) {
+    return `<span class="${smClass}">${part1}</span> ${part2}`;
+  }
 }
 
 function getNewChild(text) {

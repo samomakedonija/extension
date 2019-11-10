@@ -2,34 +2,34 @@
 
 const
   elCurrent = document.getElementById('own-current-count'),
-  elTotal = document.getElementById('own-total-count');
+  elTotal = document.getElementById('own-total-count'),
+  elToggleErasing = document.getElementById('toggle-erasing'),
+  elToggleExtension = document.getElementById('toggle-extension');
 
 chrome.tabs.query({active: true, currentWindow: true}, tabs => chrome.runtime.sendMessage({
-  action: 'get counters for tab',
+  action: 'get state',
   data: {tabId: tabs[0].id}
-}, counters => {
-  updateCounters(counters);
+}, state => {
+  updateCounters(state);
+  elToggleErasing.classList.add(state.autoErasing ? 'on': 'off');
   chrome.runtime.onMessage.addListener(
     message => message.action === 'update popup counters' && updateCounters(message.data)
   );
 }));
 
-document.getElementById(
-  'toggle-erasing'
-).addEventListener('click', sendMessage.bind(this, 'toggle-erasing'));
+elToggleErasing.addEventListener('click', toggle.bind(this, 'toggle-erasing'));
+elToggleExtension.addEventListener('click', toggle.bind(this, 'toggle-extension'));
 
-document.getElementById(
-  'toggle-extension'
-).addEventListener('click', sendMessage.bind(this, 'toggle-extension'));
-
-function sendMessage(action) {
-  chrome.tabs.query(
-    {active: true, currentWindow: true},
-    tabs => chrome.tabs.sendMessage(tabs[0].id, {action: action})
-  );
+function toggle(action) {
+  if (action === 'toggle-erasing') {
+    elToggleErasing.classList.toggle('off');
+    chrome.runtime.sendMessage({action: 'set state', data: {
+      autoErasing: elToggleErasing.classList.toggle('on')
+    }});
+  }
 }
 
-function updateCounters(counters) {
-  elCurrent.textContent = counters.current || 0;
-  elTotal.textContent = counters.total || 0;
+function updateCounters(state) {
+  elCurrent.textContent = state.current || 0;
+  elTotal.textContent = state.total || 0;
 }
