@@ -20,6 +20,8 @@ chrome.tabs.query({active: true, currentWindow: true}, tabs => chrome.runtime.se
 elToggleErasing.addEventListener('click', toggle.bind(this, 'toggle-erasing'));
 elToggleExtension.addEventListener('click', toggle.bind(this, 'toggle-extension'));
 
+chrome.runtime.sendMessage({action: 'track', data: {page: 'popup'}});
+
 function toggle(action) {
   if (action === 'toggle-erasing') {
     elToggleErasing.classList.toggle('off');

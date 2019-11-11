@@ -3,6 +3,18 @@ let
   total,
   autoErasing;
 
+loadScriptAsync('https://www.google-analytics.com/analytics.js', () => {
+  // GA from https://developers.google.com/analytics/devguides/collection/analyticsjs/tracking-snippet-reference#async-minified
+  window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+  ga('create', 'UA-152073013-1', 'auto');
+  ga('set', 'checkProtocolTask', null); // Disable file protocol checking.
+  ga('send', 'event', {
+    eventCategory: 'Extension',
+    eventAction: 'activated',
+    nonInteraction: true
+  });
+});
+
 chrome.storage.sync.get([
   'total', 'autoErasing'
 ], result => {
@@ -55,6 +67,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       autoErasing: autoErasing
     });
   }
+
+  if (request.action === 'track') {
+    ga('send', 'pageview', '/' + request.data.page);
+    return;
+  }
 });
 
 chrome.tabs.onActivated.addListener(activeInfo => {
@@ -84,4 +101,15 @@ function updateBadge(count) {
     title: 'Никогаш Северна! 👌',
     message: 'Достигнато ново дно'
   }, function(notificationId) {});
+}
+
+function loadScriptAsync(scriptSrc, callback) {
+  if (typeof(callback) !== 'function') {
+    throw new Error('loadScriptAsync: callback argument is not a function');
+  }
+
+  const script = document.createElement('script');
+  script.onload = callback;
+  script.src = scriptSrc;
+  document.head.appendChild(script);
 }
