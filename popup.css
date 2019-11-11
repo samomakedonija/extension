@@ -145,3 +145,7 @@ button:focus {
 button:hover {
   background: #e8e8e8;
 }
+
+#toggle-extension {
+  display: none;
+}
