@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
   "version": "0.3",
-  "name": "Само Македонија",
-  "description": "Автоматско бришење северџанизми при преглед на веб страници",
+  "name": "Само Македонија (Only Macedonia)",
+  "description": "Автоматско ловење и бришење северџанизми при преглед на веб страници.",
   "background": {
     "scripts": ["background.js"]
   },
