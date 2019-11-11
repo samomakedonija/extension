@@ -3,6 +3,7 @@
   --sm-color-yellow: #fdb515;
   --sm-color-dark: #333333;
   --sm-color-silver: #ececec;
+  --sm-color-yellow-light: #fdb51540;
 
   --sm-dim: 10px;
   --sm-dim-double: calc(var(--sm-dim) * 2);
@@ -144,6 +145,10 @@ button:focus {
 
 button:hover {
   background: #e8e8e8;
+}
+
+button:active {
+  background: var(--sm-color-yellow-light);
 }
 
 #toggle-extension {

@@ -25,7 +25,7 @@ function toggle(action) {
     elToggleErasing.classList.toggle('off');
     chrome.runtime.sendMessage({action: 'set state', data: {
       autoErasing: elToggleErasing.classList.toggle('on')
-    }});
+    }}, () => setTimeout(() => window.close(), 300));
   }
 }
 
