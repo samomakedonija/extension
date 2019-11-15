@@ -1,7 +1,11 @@
+const manifest = chrome.runtime.getManifest();
+
 let
   counters = {},
   total,
   autoErasing;
+
+chrome.runtime.onInstalled.addListener(onInstalled);
 
 loadScriptAsync('https://www.google-analytics.com/analytics.js', () => {
   // GA from https://developers.google.com/analytics/devguides/collection/analyticsjs/tracking-snippet-reference#async-minified
@@ -69,8 +73,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 
   if (request.action === 'track') {
-    ga('send', 'pageview', '/' + request.data.page);
-    return;
+    return ga('send', 'pageview', '/' + request.data.page);
+  }
+
+  if (request.action === 'is dev mode') {
+    return sendResponse(isDevMode());
   }
 });
 
@@ -103,6 +110,14 @@ function updateBadge(count) {
   }, function(notificationId) {});
 }
 
+async function onInstalled(details) {
+  if (details.reason !== 'install') {
+    return;
+  }
+
+  console.log('onInstalled');
+}
+
 function loadScriptAsync(scriptSrc, callback) {
   if (typeof(callback) !== 'function') {
     throw new Error('loadScriptAsync: callback argument is not a function');
@@ -112,4 +127,8 @@ function loadScriptAsync(scriptSrc, callback) {
   script.onload = callback;
   script.src = scriptSrc;
   document.head.appendChild(script);
+}
+
+function isDevMode() {
+  return !('update_url' in manifest);
 }
