@@ -1,4 +1,4 @@
-const manifest = chrome.runtime.getManifest();
+import { isDevMode, loadScriptAsync } from './util.mjs';
 
 let
   counters = {},
@@ -7,10 +7,10 @@ let
 
 chrome.runtime.onInstalled.addListener(onInstalled);
 
-loadScriptAsync('https://www.google-analytics.com/analytics.js', () => {
+loadScriptAsync('vendor/analytics.js', () => {
   // GA from https://developers.google.com/analytics/devguides/collection/analyticsjs/tracking-snippet-reference#async-minified
   window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
-  ga('create', 'UA-152073013-1', 'auto');
+  ga('create', `UA-152073013-${isDevMode() ? 2 : 1}`, 'auto');
   ga('set', 'checkProtocolTask', null); // Disable file protocol checking.
   ga('send', 'event', {
     eventCategory: 'Extension',
@@ -116,19 +116,4 @@ async function onInstalled(details) {
   }
 
   console.log('onInstalled');
-}
-
-function loadScriptAsync(scriptSrc, callback) {
-  if (typeof(callback) !== 'function') {
-    throw new Error('loadScriptAsync: callback argument is not a function');
-  }
-
-  const script = document.createElement('script');
-  script.onload = callback;
-  script.src = scriptSrc;
-  document.head.appendChild(script);
-}
-
-function isDevMode() {
-  return !('update_url' in manifest);
 }
