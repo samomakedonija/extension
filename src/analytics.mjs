@@ -9,7 +9,7 @@ async function track(hitType, ...args) {
 }
 
 async function init(devMode) {
-  await loadScriptAsync('vendor/analytics.js');
+  await loadScriptAsync('/vendor/analytics.js');
   window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
   ga('create', `UA-152073013-${devMode ? 2 : 1}`, 'auto');
   ga('set', 'checkProtocolTask', null); // Disable file protocol checking.

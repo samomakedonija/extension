@@ -4,7 +4,7 @@
   "name": "Само Македонија (Only Macedonia)",
   "description": "Автоматско ловење и бришење северџанизми при преглед на веб страници.",
   "background": {
-    "page": "index.html"
+    "page": "src/index.html"
   },
   "content_scripts": [{
     "matches": ["<all_urls>"],
