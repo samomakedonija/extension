@@ -8,9 +8,12 @@
   },
   "content_scripts": [{
     "matches": ["<all_urls>"],
-    "css": ["content.css"],
-    "js": ["content.js"]
+    "css": ["src/content/content.css"],
+    "js": ["src/content/content-bootstrap.js"]
   }],
+  "web_accessible_resources": [
+    "src/*"
+  ],
   "browser_action": {
     "default_title": "Само Македонија! 👌",
     "default_popup": "popup.html",
