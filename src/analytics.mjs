@@ -1,12 +1,10 @@
 import { isDevMode, loadScriptAsync, log } from './util.mjs';
 
-const
-  debug = false,
-  analytics = init(isDevMode());
+const analytics = init(isDevMode());
 
 async function track(hitType, ...args) {
   (await analytics)('send', hitType, ...args);
-  debug && log('analytics.track', hitType, ...args);
+  log('analytics.track', hitType, ...args);
   return true;
 }
 
@@ -15,7 +13,7 @@ async function init(devMode) {
   window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
   ga('create', `UA-152073013-${devMode ? 2 : 1}`, 'auto');
   ga('set', 'checkProtocolTask', null); // Disable file protocol checking.
-  debug && log('analytics.init');
+  log('analytics.init');
   return ga;
 }
 

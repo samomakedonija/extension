@@ -1,5 +1,7 @@
+const manifest = chrome.runtime.getManifest();
+
 function isDevMode() {
-  return !('update_url' in chrome.runtime.getManifest());
+  return !('update_url' in manifest);
 }
 
 function loadScriptAsync(src) {
@@ -12,7 +14,7 @@ function loadScriptAsync(src) {
 }
 
 function log(...args) {
-  console.log('s-m:', ...args);
+  isDevMode() && console.log('s-m:', ...args);
   return true;
 }
 
