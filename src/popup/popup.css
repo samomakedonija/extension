@@ -132,11 +132,11 @@ button:after {
 }
 
 button.off:after {
-  background-image: url(check_box_off-24px.svg);
+  background-image: url(../assets/check_box_off-24px.svg);
 }
 
 button.on:after {
-  background-image: url(check_box_on-24px.svg);
+  background-image: url(../assets/check_box_on-24px.svg);
 }
 
 button:focus {
