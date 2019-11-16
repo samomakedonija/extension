@@ -1,4 +1,5 @@
-import { isDevMode, loadScriptAsync } from './util.mjs';
+import { isDevMode } from './util.mjs';
+import { track } from './analytics.mjs';
 
 let
   counters = {},
@@ -7,16 +8,10 @@ let
 
 chrome.runtime.onInstalled.addListener(onInstalled);
 
-loadScriptAsync('vendor/analytics.js', () => {
-  // GA from https://developers.google.com/analytics/devguides/collection/analyticsjs/tracking-snippet-reference#async-minified
-  window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
-  ga('create', `UA-152073013-${isDevMode() ? 2 : 1}`, 'auto');
-  ga('set', 'checkProtocolTask', null); // Disable file protocol checking.
-  ga('send', 'event', {
-    eventCategory: 'Extension',
-    eventAction: 'activated',
-    nonInteraction: true
-  });
+track('event', {
+  eventCategory: 'Extension',
+  eventAction: 'activated',
+  nonInteraction: true
 });
 
 chrome.storage.sync.get([
@@ -73,7 +68,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 
   if (request.action === 'track') {
-    return ga('send', 'pageview', '/' + request.data.page);
+    return track('pageview', '/' + request.data.page);
   }
 
   if (request.action === 'is dev mode') {
@@ -110,10 +105,10 @@ function updateBadge(count) {
   }, function(notificationId) {});
 }
 
-async function onInstalled(details) {
-  if (details.reason !== 'install') {
-    return;
-  }
-
-  console.log('onInstalled');
+function onInstalled(details) {
+  details.reason === 'install' && track('event', {
+    eventCategory: 'Extension',
+    eventAction: 'installed',
+    nonInteraction: true
+  });
 }

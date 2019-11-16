@@ -1,18 +1,19 @@
-const manifest = chrome.runtime.getManifest();
-
 function isDevMode() {
-  return !('update_url' in manifest);
+  return !('update_url' in chrome.runtime.getManifest());
 }
 
-function loadScriptAsync(scriptSrc, callback) {
-  if (typeof(callback) !== 'function') {
-    throw new Error('loadScriptAsync: callback argument is not a function');
-  }
-
-  const script = document.createElement('script');
-  script.onload = callback;
-  script.src = scriptSrc;
-  document.head.appendChild(script);
+function loadScriptAsync(src) {
+  return new Promise(resolve => {
+    const script = document.createElement('script');
+    script.onload = resolve;
+    script.src = src;
+    document.head.appendChild(script);
+  });
 }
 
-export { isDevMode, loadScriptAsync };
+function log(...args) {
+  console.log('s-m:', ...args);
+  return true;
+}
+
+export { isDevMode, loadScriptAsync, log };
