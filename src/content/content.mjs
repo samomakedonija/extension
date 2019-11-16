@@ -3,7 +3,6 @@ import { log } from '../util.mjs';
 export function run() {
   let _autoErasing;
 
-  log('all good');
   chrome.runtime.onMessage.addListener(request => {
     if (request.action === 'toggle erasing') {
       if (_autoErasing === request.data.autoErasing) {
