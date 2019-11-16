@@ -1,35 +1,40 @@
-let _autoErasing;
+import { log } from '../util.mjs';
 
-chrome.runtime.onMessage.addListener(request => {
-  if (request.action === 'toggle erasing') {
-    if (_autoErasing === request.data.autoErasing) {
-      return;
+export function run() {
+  let _autoErasing;
+
+  log('all good');
+  chrome.runtime.onMessage.addListener(request => {
+    if (request.action === 'toggle erasing') {
+      if (_autoErasing === request.data.autoErasing) {
+        return;
+      }
+
+      _autoErasing = request.data.autoErasing;
+      document.body.querySelectorAll('.s-m').forEach(node => {
+        node.classList.toggle('s-m-hidden');
+        node.classList.toggle('s-m-accent');
+      });
     }
 
-    _autoErasing = request.data.autoErasing;
-    document.body.querySelectorAll('.s-m').forEach(node => {
-      node.classList.toggle('s-m-hidden');
-      node.classList.toggle('s-m-accent');
-    });
-  }
-
-  if (request.action === 'toggle extension') {
-    log(request.action);
-  }
-});
-
-chrome.runtime.sendMessage({action: 'get state'}, state => {
-  _autoErasing = state.autoErasing;
-  chrome.runtime.sendMessage({action: 'count', data: {
-    initialCount: detectNorthisms(_autoErasing)
-  }});
-  observeAddedContent(addedElements => {
-    const addCount = detectNorthisms(_autoErasing, addedElements);
-    addCount > 0 && chrome.runtime.sendMessage({action: 'count', data: {
-      addCount: addCount
-    }});
+    if (request.action === 'toggle extension') {
+      log(request.action);
+    }
   });
-});
+
+  chrome.runtime.sendMessage({action: 'get state'}, state => {
+    _autoErasing = state.autoErasing;
+    chrome.runtime.sendMessage({action: 'count', data: {
+      initialCount: detectNorthisms(_autoErasing)
+    }});
+    observeAddedContent(addedElements => {
+      const addCount = detectNorthisms(_autoErasing, addedElements);
+      addCount > 0 && chrome.runtime.sendMessage({action: 'count', data: {
+        addCount: addCount
+      }});
+    });
+  });
+}
 
 function detectNorthisms(autoErasing, elements) {
   const smClass = `s-m ${autoErasing ? 's-m-hidden' : 's-m-accent'}`;
@@ -96,8 +101,4 @@ function observeAddedContent(addedElementsCb) {
     ));
     addedElementsCb(elements);
   }).observe(document.body, {childList: true, subtree: true});
-}
-
-function log(...args) {
-  console.log('s-m:', ...args);
 }
