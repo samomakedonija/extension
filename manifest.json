@@ -16,19 +16,19 @@
   ],
   "browser_action": {
     "default_title": "Само Македонија! 👌",
-    "default_popup": "popup.html",
+    "default_popup": "src/popup/popup.html",
     "default_icon": {
-      "16": "toolbar_icon16.png",
-      "32": "toolbar_icon32.png",
-      "48": "toolbar_icon48.png",
-      "128": "toolbar_icon128.png"
+      "16": "src/assets/toolbar_icon16.png",
+      "32": "src/assets/toolbar_icon32.png",
+      "48": "src/assets/toolbar_icon48.png",
+      "128": "src/assets/toolbar_icon128.png"
     }
   },
   "icons": {
-    "16": "extension_icon16.png",
-    "32": "extension_icon32.png",
-    "48": "extension_icon48.png",
-    "128": "extension_icon128.png"
+    "16": "src/assets/extension_icon16.png",
+    "32": "src/assets/extension_icon32.png",
+    "48": "src/assets/extension_icon48.png",
+    "128": "src/assets/extension_icon128.png"
   },
   "permissions": [
     "storage",
