@@ -12,8 +12,8 @@ async function getConfig() {
 }
 
 async function init(devMode) {
-  await loadScriptAsync('vendor/firebase-app.7.4.0.js');
-  await loadScriptAsync('vendor/firebase-remote-config.7.4.0.js');
+  await loadScriptAsync('/vendor/firebase-app.7.4.0.js');
+  await loadScriptAsync('/vendor/firebase-remote-config.7.4.0.js');
   const config = firebase.initializeApp(devMode ? {
     apiKey: 'AIzaSyAd64FhgafWl5lZl457MQIEiYWxWvvCpj8',
     projectId: 'samo-makedonija-dev',
