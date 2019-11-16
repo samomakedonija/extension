@@ -1,5 +1,3 @@
-'use strict';
-
 const
   elCurrent = document.getElementById('own-current-count'),
   elTotal = document.getElementById('own-total-count'),
