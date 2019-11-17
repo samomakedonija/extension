@@ -1,0 +1,11 @@
+{
+  "name": "samo-makedonija",
+  "scripts": {
+    "test": "jasmine --config=jasmine.json"
+  },
+  "devDependencies": {
+    "esm": "^3.2.25",
+    "jasmine": "^3.5.0",
+    "jasmine-spec-reporter": "^4.2.1"
+  }
+}
