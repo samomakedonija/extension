@@ -1,9 +1,9 @@
+import { replace } from './northisms.mjs';
 import { log } from '../util.mjs';
 
 export function run() {
   let _autoErasing;
 
-  log('all good');
   chrome.runtime.onMessage.addListener(request => {
     if (request.action === 'toggle erasing') {
       if (_autoErasing === request.data.autoErasing) {
@@ -53,7 +53,7 @@ function detectNorthisms(autoErasing, elements) {
       }
 
       text = node.nodeValue;
-      replacedText = replaceNorthisms(text, smClass);
+      replacedText = replace(text, smClass);
       if (replacedText === text) {
         continue;
       }
@@ -64,23 +64,6 @@ function detectNorthisms(autoErasing, elements) {
   }
 
   return count;
-}
-
-function replaceNorthisms(s, smClass) {
-  return s.replace(
-    /Северна Македонија/gi, getSpan(0, 'Северна', ' Македонија')
-  ).replace(
-    /С\. Македонија/gi, getSpan(0, 'С.', ' Македонија')
-  ).replace(
-    /РСМ/gi, getSpan(1, 'Р', 'С', 'М')
-  ).replace(
-    /North Macedonia/gi, getSpan(0, 'North', ' Macedonia')
-  );
-
-  function getSpan(pos, ...parts) {
-    parts[pos] = `<span class="${smClass}">${parts[pos]}</span>`;
-    return parts.join('');
-  }
 }
 
 function getNewChild(text) {
