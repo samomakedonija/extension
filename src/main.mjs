@@ -1,6 +1,32 @@
 import { isDevMode } from './util.mjs';
 import { track } from './analytics.mjs';
 
+const northisms = [{
+  group: 'mk',
+  pattern: 'Северна.*Македонија',
+  obliterate: 'Северна'
+}, {
+  group: 'mk',
+  pattern: 'С\\. Македонија',
+  obliterate: 'С\\.'
+}, {
+  group: 'mk',
+  pattern: 'РСМ',
+  obliterate: 'С'
+}, {
+  group: 'en',
+  pattern: 'North Macedonia',
+  obliterate: 'North'
+}, {
+  group: 'fr',
+  pattern: 'Macédoine du Nord',
+  obliterate: 'du Nord'
+}, {
+  group: 'de',
+  pattern: 'Nordmazedonien',
+  obliterate: 'Nord'
+}];
+
 let
   counters = {},
   total,
@@ -61,6 +87,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
   if (request.action === 'get state') {
     return sendResponse({
+      northisms: northisms,
       current: request.data ? counters[request.data.tabId] : undefined,
       total: total,
       autoErasing: autoErasing
