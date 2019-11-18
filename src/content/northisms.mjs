@@ -1,31 +1,15 @@
-const northisms = [{
-  group: 'mk',
-  pattern: 'Северна.*Македонија',
-  obliterate: 'Северна'
-}, {
-  group: 'mk',
-  pattern: 'С\\. Македонија',
-  obliterate: 'С\\.'
-}, {
-  group: 'mk',
-  pattern: 'РСМ',
-  obliterate: 'С'
-}, {
-  group: 'en',
-  pattern: 'North Macedonia',
-  obliterate: 'North'
-}, {
-  group: 'fr',
-  pattern: 'Macédoine du Nord',
-  obliterate: 'du Nord'
-}, {
-  group: 'de',
-  pattern: 'Nordmazedonien',
-  obliterate: 'Nord'
-}];
+let _northisms = [];
 
-function replace(s, smClass) {
-  return northisms.reduce((acc, cur) => acc.replace(
+function init(northisms) {
+  _northisms = northisms;
+}
+
+function replace(s, smClass, callback) {
+  if (!s) {
+    return;
+  }
+
+  const replacement = _northisms.reduce((acc, cur) => acc.replace(
     new RegExp(cur.pattern, 'gi'),
     match => {
       if (cur.group === 'de') {
@@ -41,6 +25,8 @@ function replace(s, smClass) {
       );
     }
   ), s);
+
+  s !== replacement && callback(replacement);
 }
 
-export { replace };
+export { init, replace };

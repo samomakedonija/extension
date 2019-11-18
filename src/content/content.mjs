@@ -1,4 +1,4 @@
-import { replace } from './northisms.mjs';
+import { init, replace } from './northisms.mjs';
 import { log } from '../util.mjs';
 
 export function run() {
@@ -23,12 +23,13 @@ export function run() {
   });
 
   chrome.runtime.sendMessage({action: 'get state'}, state => {
+    init(state.northisms);
     _autoErasing = state.autoErasing;
     chrome.runtime.sendMessage({action: 'count', data: {
-      initialCount: detectNorthisms(_autoErasing)
+      initialCount: modifyDom(detectNorthisms(_autoErasing))
     }});
     observeAddedContent(addedElements => {
-      const addCount = detectNorthisms(_autoErasing, addedElements);
+      const addCount = modifyDom(detectNorthisms(_autoErasing, addedElements));
       addCount > 0 && chrome.runtime.sendMessage({action: 'count', data: {
         addCount: addCount
       }});
@@ -37,33 +38,31 @@ export function run() {
 }
 
 function detectNorthisms(autoErasing, elements) {
-  const smClass = `s-m ${autoErasing ? 's-m-hidden' : 's-m-accent'}`;
-  let
-    element, node, text, replacedText, i, j,
-    count = 0;
+  const
+    smClass = `s-m ${autoErasing ? 's-m-hidden' : 's-m-accent'}`,
+    domMods = [];
+  Array.from(
+    elements || document.body.getElementsByTagName('*')
+  ).forEach(element => element.childNodes.forEach(
+    node => node.nodeType === 3 && replace(
+      node.nodeValue,
+      smClass,
+      text => domMods.push({element: element, node: node, text: text})
+    )
+  ));
 
-  elements = elements || document.body.getElementsByTagName('*');
-  for (i = 0; i < elements.length; i++) {
-    element = elements[i];
+  return domMods;
+}
 
-    for (j = 0; j < element.childNodes.length; j++) {
-      node = element.childNodes[j];
-      if (node.nodeType !== 3) {
-        continue;
-      }
-
-      text = node.nodeValue;
-      replacedText = replace(text, smClass);
-      if (replacedText === text) {
-        continue;
-      }
-
-      count++;
-      element.replaceChild(getNewChild(replacedText), node);
-    }
+function modifyDom(mods) {
+  if (!mods.length) {
+    return 0;
   }
 
-  return count;
+  mods.forEach(mod => mod.element.replaceChild(
+    getNewChild(mod.text), mod.node
+  ));
+  return mods.length;
 }
 
 function getNewChild(text) {

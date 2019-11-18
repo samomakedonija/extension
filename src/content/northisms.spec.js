@@ -1,9 +1,40 @@
-const { replace } = require('esm')(module)('./northisms.mjs');
+const { init, replace } = require('esm')(module)('./northisms.mjs');
 
 describe('northisms', () => {
-  const test = (pattern, replacement) => expect(
-    replace(pattern, 'class')
-  ).toBe(replacement);
+  const test = (pattern, replacement) => {
+    const spy = {callback: () => {}};
+    spyOn(spy, 'callback');
+    replace(pattern, 'class', spy.callback);
+    replacement
+      ? expect(spy.callback).toHaveBeenCalledWith(replacement)
+      : expect(spy.callback).not.toHaveBeenCalled();
+  };
+
+  beforeAll(() => init([{
+    group: 'mk',
+    pattern: 'Северна.*Македонија',
+    obliterate: 'Северна'
+  }, {
+    group: 'mk',
+    pattern: 'С\\. Македонија',
+    obliterate: 'С\\.'
+  }, {
+    group: 'mk',
+    pattern: 'РСМ',
+    obliterate: 'С'
+  }, {
+    group: 'en',
+    pattern: 'North Macedonia',
+    obliterate: 'North'
+  }, {
+    group: 'fr',
+    pattern: 'Macédoine du Nord',
+    obliterate: 'du Nord'
+  }, {
+    group: 'de',
+    pattern: 'Nordmazedonien',
+    obliterate: 'Nord'
+  }]));
 
   it('replace', () => {
     test(
@@ -77,10 +108,13 @@ describe('northisms', () => {
     );
   });
 
-  it('replace regex check', () => {
-    test(
-      'СХ Македонија',
-      'СХ Македонија'
-    );
+  it('replace not needed', () => {
+    test();
+
+    test('');
+
+    test('СХ Македонија');
+
+    test('Северна');
   });
 });
