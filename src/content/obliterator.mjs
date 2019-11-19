@@ -1,10 +1,10 @@
 let _northisms = [];
 
 function init(northisms) {
-  _northisms = northisms;
+  _northisms = northisms || [];
 }
 
-function replace(s, smClass, callback) {
+function obliterate(s, smClass, callback) {
   if (!s) {
     return;
   }
@@ -29,4 +29,4 @@ function replace(s, smClass, callback) {
   s !== replacement && callback(replacement);
 }
 
-export { init, replace };
+export { init, obliterate };
