@@ -1,31 +1,6 @@
 import { isDevMode } from './util.mjs';
+import { getNorthisms } from './northisms.mjs';
 import { track } from './analytics.mjs';
-
-const northisms = [{
-  group: 'mk',
-  pattern: 'Северна Македонија',
-  obliterate: 'Северна'
-}, {
-  group: 'mk',
-  pattern: 'С\\. Македонија',
-  obliterate: 'С\\.'
-}, {
-  group: 'mk',
-  pattern: 'РСМ',
-  obliterate: 'С'
-}, {
-  group: 'en',
-  pattern: 'North Macedonia',
-  obliterate: 'North'
-}, {
-  group: 'fr',
-  pattern: 'Macédoine du Nord',
-  obliterate: 'du Nord'
-}, {
-  group: 'de',
-  pattern: 'Nordmazedonien',
-  obliterate: 'Nord'
-}];
 
 let
   counters = {},
@@ -86,12 +61,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 
   if (request.action === 'get state') {
-    return sendResponse({
+    getNorthisms().then(northisms => sendResponse({
       northisms: northisms,
       current: request.data ? counters[request.data.tabId] : undefined,
       total: total,
       autoErasing: autoErasing
-    });
+    }));
+    // We wish to send a response asynchronously, so the message channel
+    // will be kept open to the other end (caller) until sendResponse is executed.
+    return true;
   }
 
   if (request.action === 'track') {

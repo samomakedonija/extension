@@ -1,4 +1,4 @@
-import { init, replace } from './northisms.mjs';
+import { init, obliterate } from './obliterator.mjs';
 import { log } from '../util.mjs';
 
 export function run() {
@@ -44,7 +44,7 @@ function detectNorthisms(autoErasing, elements) {
   Array.from(
     elements || document.body.getElementsByTagName('*')
   ).forEach(element => element.childNodes.forEach(
-    node => node.nodeType === 3 && replace(
+    node => node.nodeType === 3 && obliterate(
       node.nodeValue,
       smClass,
       text => domMods.push({element: element, node: node, text: text})
