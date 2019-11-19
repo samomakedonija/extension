@@ -3,7 +3,7 @@ import { track } from './analytics.mjs';
 
 const northisms = [{
   group: 'mk',
-  pattern: 'Северна.*Македонија',
+  pattern: 'Северна Македонија',
   obliterate: 'Северна'
 }, {
   group: 'mk',
