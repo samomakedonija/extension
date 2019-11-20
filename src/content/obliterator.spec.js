@@ -95,5 +95,7 @@ describe('obliterator', () => {
     test('СХ Македонија');
 
     test('Северна');
+
+    false && test('СЕКС. Македонија');
   });
 });

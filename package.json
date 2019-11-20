@@ -1,10 +1,13 @@
 {
   "name": "samo-makedonija",
   "scripts": {
+    "postinstall": "(cd node_modules/firebase && cp firebase-app.js firebase-remote-config.js ../../vendor/)",
+    "dist": "rm -rf dist node_modules && npm i && npm test && mkdir dist && cp -r manifest.json src vendor dist/",
     "test": "jasmine --config=jasmine.json"
   },
   "devDependencies": {
     "esm": "^3.2.25",
+    "firebase": "^7.4.0",
     "jasmine": "^3.5.0",
     "jasmine-spec-reporter": "^4.2.1"
   }
