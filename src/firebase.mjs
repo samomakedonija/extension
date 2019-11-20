@@ -1,11 +1,11 @@
-import { isDevMode, loadScriptAsync, log } from './util.mjs';
+import { isDevMode, log } from './util.mjs';
 
 const KEY = 'northisms';
 
 let remoteConfig;
 
 async function fetchRemoteNorthisms(defaultNorthisms) {
-  remoteConfig = remoteConfig || (await initRemoteConfig(defaultNorthisms));
+  remoteConfig = remoteConfig || initRemoteConfig(defaultNorthisms);
   await remoteConfig.fetchAndActivate();
 }
 
@@ -17,9 +17,7 @@ function getRemoteNorthisms() {
   }
 }
 
-async function initRemoteConfig(defaultNorthisms) {
-  await loadScriptAsync('/vendor/firebase-app.js');
-  await loadScriptAsync('/vendor/firebase-remote-config.js');
+function initRemoteConfig(defaultNorthisms) {
   const
     devMode = isDevMode(),
     config = firebase.initializeApp(devMode ? {

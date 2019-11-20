@@ -1,6 +1,8 @@
 import { fetchRemoteNorthisms, getRemoteNorthisms } from './firebase.mjs';
 import { log } from './util.mjs';
 
+const initialized = init();
+
 let northisms;
 
 async function getNorthisms() {
@@ -8,6 +10,12 @@ async function getNorthisms() {
     return northisms;
   }
 
+  await initialized;
+  northisms = getRemoteNorthisms();
+  return northisms;
+}
+
+async function init() {
   try {
     await fetchRemoteNorthisms(
       await (await fetch('northisms.json')).json()
@@ -15,9 +23,6 @@ async function getNorthisms() {
   } catch (e) {
     log('getNorthisms', e);
   }
-
-  northisms = getRemoteNorthisms();
-  return northisms;
 }
 
 export { getNorthisms };
