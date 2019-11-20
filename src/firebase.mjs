@@ -18,18 +18,19 @@ function getRemoteNorthisms() {
 }
 
 async function initRemoteConfig(defaultNorthisms) {
-  const devMode = isDevMode();
   await loadScriptAsync('/vendor/firebase-app.js');
   await loadScriptAsync('/vendor/firebase-remote-config.js');
-  const config = firebase.initializeApp(devMode ? {
-    apiKey: 'AIzaSyAd64FhgafWl5lZl457MQIEiYWxWvvCpj8',
-    projectId: 'samo-makedonija-dev',
-    appId: '1:306786047204:web:42c72de833b9dcb3c8c8f1'
-  } : {
-    apiKey: '',
-    projectId: '',
-    appId: ''
-  }).remoteConfig();
+  const
+    devMode = isDevMode(),
+    config = firebase.initializeApp(devMode ? {
+      apiKey: 'AIzaSyAd64FhgafWl5lZl457MQIEiYWxWvvCpj8',
+      projectId: 'samo-makedonija-dev',
+      appId: '1:306786047204:web:42c72de833b9dcb3c8c8f1'
+    } : {
+      apiKey: 'AIzaSyCOj5kRi5dwjs6gVh-dGEgdoMp12qdyy6M',
+      projectId: 'samo-makedonija',
+      appId: '1:916566706161:web:9d24e6d3e6a55f7a046650'
+    }).remoteConfig();
   if (devMode) {
     config.settings = {minimumFetchIntervalMillis: 60 * 60 * 1000};
   }
