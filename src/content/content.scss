@@ -1,0 +1,13 @@
+.sme-content {
+
+  &.sme-hide {
+    display: none !important;
+  }
+
+  &.sme-cross {
+    background: red !important;
+    color: white !important;
+    text-decoration: line-through !important;
+  }
+
+}

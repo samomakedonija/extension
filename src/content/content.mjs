@@ -1,6 +1,12 @@
 import { init, obliterate } from './obliterator.mjs';
 import { log } from '../util.mjs';
 
+const CLASS = {
+  CONTENT: 'sme-content',
+  HIDE: 'sme-hide',
+  CROSS: 'sme-cross'
+};
+
 export function run() {
   let _autoErasing;
 
@@ -11,9 +17,9 @@ export function run() {
       }
 
       _autoErasing = request.data.autoErasing;
-      document.body.querySelectorAll('.s-m').forEach(node => {
-        node.classList.toggle('s-m-hidden');
-        node.classList.toggle('s-m-accent');
+      document.body.querySelectorAll('.' + CLASS.CONTENT).forEach(node => {
+        node.classList.toggle(CLASS.HIDE);
+        node.classList.toggle(CLASS.CROSS);
       });
     }
 
@@ -39,7 +45,7 @@ export function run() {
 
 function detectNorthisms(autoErasing, elements) {
   const
-    smClass = `s-m ${autoErasing ? 's-m-hidden' : 's-m-accent'}`,
+    smClass = `${CLASS.CONTENT} ${autoErasing ? CLASS.HIDE : CLASS.CROSS}`,
     domMods = [];
   Array.from(
     elements || document.body.getElementsByTagName('*')
@@ -66,7 +72,7 @@ function modifyDom(mods) {
 }
 
 function getNewChild(text) {
-  if (text.indexOf('class="s-m') === -1) {
+  if (text.indexOf(`class="${CLASS.CONTENT}`) === -1) {
     return document.createTextNode(text);
   }
 
