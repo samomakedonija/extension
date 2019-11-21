@@ -1,0 +1,4 @@
+.gitignore
+src/jasmine
+src/**/*.scss
+src/**/*.spec.js
