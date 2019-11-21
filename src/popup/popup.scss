@@ -130,9 +130,6 @@
       &:active {
         background: $color-yellow-light;
       }
-      &#toggle-extension {
-        display: none;
-      }
       &.on {
         &:after {
           background-image: url(../assets/check_box_on-24px.svg);
