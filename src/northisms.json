@@ -22,4 +22,8 @@
   "group": "de",
   "pattern": "Nordmazedonien",
   "obliterate": "Nord"
+}, {
+  "group": "hr",
+  "pattern": "Sjeverna Makedonija",
+  "obliterate": "Sjeverna"
 }]
