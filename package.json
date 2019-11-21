@@ -1,13 +1,15 @@
 {
   "name": "samo-makedonija",
   "scripts": {
-    "postinstall": "(cd node_modules/firebase && cp firebase-app.js firebase-remote-config.js ../../vendor/) && npm run sass",
-    "sass": "sass --no-source-map src",
-    "dist": "npm run reset && npm i && npm test && npm run dist:copy && npm run dist:zip",
-    "dist:copy": "rsync -r --exclude-from 'dist-exclude' manifest.json src vendor dist",
-    "dist:zip": "(cd dist && zip -r ../dist-$(node -e 'process.stdout.write(require(`./manifest.json`).version);').zip .)",
-    "reset": "rm -rf node_modules src/**/*.css dist dist-*.zip",
-    "test": "jasmine --config=jasmine.json"
+    "preinstall": "ln -sf `pwd`/om.sh /usr/local/bin/om",
+    "postinstall": "(cd node_modules/firebase && cp firebase-app.js firebase-remote-config.js ../../vendor/) && om _sass",
+    "build": "npm i",
+    "dist": "om clean && om build && om test && om _dist:copy && om _dist:zip && echo '\n'$(ls dist-*.zip) is ready.",
+    "clean": "rm -rf node_modules src/**/*.css dist dist-*.zip",
+    "test": "jasmine --config=jasmine.json",
+    "_sass": "sass --no-source-map src",
+    "_dist:copy": "rsync -r --exclude-from 'dist-exclude' manifest.json src vendor dist",
+    "_dist:zip": "(cd dist && zip -rq ../dist-$(node -e 'process.stdout.write(require(`./manifest.json`).version);').zip .)"
   },
   "devDependencies": {
     "esm": "^3.2.25",
