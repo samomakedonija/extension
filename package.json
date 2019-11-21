@@ -5,8 +5,8 @@
     "sass": "sass --no-source-map src",
     "dist": "npm run reset && npm i && npm test && npm run dist:copy && npm run dist:zip",
     "dist:copy": "rsync -r --exclude-from 'dist-exclude' manifest.json src vendor dist",
-    "dist:zip": "(cd dist && zip -r ../dist.zip .)",
-    "reset": "rm -rf node_modules src/**/*.css dist dist.zip",
+    "dist:zip": "(cd dist && zip -r ../dist-$(node -e 'process.stdout.write(require(`./manifest.json`).version);').zip .)",
+    "reset": "rm -rf node_modules src/**/*.css dist dist-*.zip",
     "test": "jasmine --config=jasmine.json"
   },
   "devDependencies": {

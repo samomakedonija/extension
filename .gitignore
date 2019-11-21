@@ -1,5 +1,5 @@
 .DS_Store
 node_modules
-/dist.zip
+/dist-*.zip
 /dist
 /src/**/*.css
