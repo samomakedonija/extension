@@ -84,7 +84,7 @@ function onCount(tab, data) {
     return;
   }
 
-  if (!data.takeIntoAccount && hrefCounters[fnv1a(data.location.href)] === data.initialCount) {
+  if (!data.takeIntoAccount || hrefCounters[fnv1a(data.location.href)] === data.initialCount) {
     counters[tabId] = data.initialCount;
     updateCounters(counters[tabId], total, tab.incognito);
     return;
