@@ -1,9 +1,10 @@
-import { isDevMode } from './util.mjs';
+import { fnv1a, isDevMode } from './util.mjs';
 import { getNorthisms } from './northisms.mjs';
 import { track } from './analytics.mjs';
 
 let
   counters = {},
+  hrefCounters = {},
   total,
   autoErasing;
 
@@ -24,23 +25,7 @@ chrome.storage.sync.get([
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'count') {
-    const
-      tabId = sender.tab.id,
-      data = request.data;
-    if (data.initialCount !== undefined) {
-      counters[tabId] = data.initialCount;
-      total += data.initialCount;
-    } else {
-      counters[tabId] += data.addCount;
-      total += data.addCount;
-    }
-
-    updateBadge(counters[tabId]);
-    chrome.runtime.sendMessage({action: 'update popup counters', data: {
-      current: counters[tabId],
-      total: total
-    }});
-    !sender.tab.incognito && chrome.storage.sync.set({total: total});
+    onCount(sender.tab, request.data);
     return;
   }
 
@@ -89,6 +74,37 @@ chrome.tabs.onActivated.addListener(activeInfo => {
 });
 
 chrome.tabs.onRemoved.addListener(tabId => delete counters[tabId]);
+
+function onCount(tab, data) {
+  const tabId = tab.id;
+  if (data.addCount !== undefined) {
+    counters[tabId] += data.addCount;
+    total += data.addCount;
+    updateCounters(counters[tabId], total, tab.incognito);
+    return;
+  }
+
+  if (!data.takeIntoAccount && hrefCounters[fnv1a(data.location.href)] === data.initialCount) {
+    counters[tabId] = data.initialCount;
+    updateCounters(counters[tabId], total, tab.incognito);
+    return;
+  }
+
+  hrefCounters[fnv1a(data.location.href)] = data.initialCount;
+  counters[tabId] = data.initialCount;
+  total += data.initialCount;
+  updateCounters(counters[tabId], total, tab.incognito);
+  return;
+}
+
+function updateCounters(current, total, incognito) {
+  updateBadge(current);
+  chrome.runtime.sendMessage({action: 'update popup counters', data: {
+    current: current,
+    total: total
+  }});
+  !incognito && chrome.storage.sync.set({total: total});
+}
 
 function updateBadge(count) {
   if (count === 0) {

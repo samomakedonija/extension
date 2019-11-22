@@ -32,11 +32,15 @@ export function run() {
     init(state.northisms);
     _autoErasing = state.autoErasing;
     chrome.runtime.sendMessage({action: 'count', data: {
-      initialCount: modifyDom(detectNorthisms(_autoErasing))
+      location: window.location,
+      initialCount: modifyDom(detectNorthisms(_autoErasing)),
+      takeIntoAccount: takeIntoAccount()
     }});
+
     observeAddedContent(addedElements => {
       const addCount = modifyDom(detectNorthisms(_autoErasing, addedElements));
       addCount > 0 && chrome.runtime.sendMessage({action: 'count', data: {
+        location: window.location,
         addCount: addCount
       }});
     });
@@ -89,4 +93,14 @@ function observeAddedContent(addedElementsCb) {
     ));
     addedElementsCb(elements);
   }).observe(document.body, {childList: true, subtree: true});
+}
+
+function takeIntoAccount() {
+  try {
+    return !['reload', 'back_forward'].includes(
+      performance.getEntriesByType('navigation')[0].type
+    );
+  } catch {
+    return true;
+  }
 }
