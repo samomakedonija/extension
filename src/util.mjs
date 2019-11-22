@@ -14,7 +14,7 @@ function loadScriptAsync(src) {
 }
 
 function log(...args) {
-  isDevMode() && console.log('s-m:', ...args);
+  isDevMode() && console.log('om:', ...args);
   return true;
 }
 

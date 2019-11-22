@@ -2,9 +2,9 @@ import { init, obliterate } from './obliterator.mjs';
 import { log } from '../util.mjs';
 
 const CLASS = {
-  CONTENT: 'sme-content',
-  HIDE: 'sme-hide',
-  CROSS: 'sme-cross'
+  CONTENT: 'om-content',
+  HIDE: 'om-hide',
+  CROSS: 'om-cross'
 };
 
 export function run() {
@@ -45,14 +45,14 @@ export function run() {
 
 function detectNorthisms(autoErasing, elements) {
   const
-    smClass = `${CLASS.CONTENT} ${autoErasing ? CLASS.HIDE : CLASS.CROSS}`,
+    className = `${CLASS.CONTENT} ${autoErasing ? CLASS.HIDE : CLASS.CROSS}`,
     domMods = [];
   Array.from(
     elements || document.body.getElementsByTagName('*')
   ).forEach(element => element.childNodes.forEach(
     node => node.nodeType === 3 && obliterate(
       node.nodeValue,
-      smClass,
+      className,
       text => domMods.push({element: element, node: node, text: text})
     )
   ));

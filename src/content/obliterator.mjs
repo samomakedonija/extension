@@ -4,7 +4,7 @@ function init(northisms) {
   _northisms = northisms || [];
 }
 
-function obliterate(s, smClass, callback) {
+function obliterate(s, className, callback) {
   if (!s) {
     return;
   }
@@ -15,13 +15,13 @@ function obliterate(s, smClass, callback) {
       if (cur.group === 'de') {
         return match.replace(
           new RegExp(cur.obliterate + 'm', 'gi'),
-          submatch => `<span class="${smClass}">${submatch.slice(0, -1)}</span>M`
+          submatch => `<span class="${className}">${submatch.slice(0, -1)}</span>M`
         );
       }
 
       return match.replace(
         new RegExp(cur.obliterate, 'gi'),
-        submatch => `<span class="${smClass}">${submatch}</span>`
+        submatch => `<span class="${className}">${submatch}</span>`
       );
     }
   ), s);
