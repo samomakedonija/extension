@@ -1,4 +1,4 @@
-import { fnv1a, isDevMode } from './util.mjs';
+import { fnv1a, isDevMode, log } from './util.mjs';
 import { getNorthisms } from './northisms.mjs';
 import { track } from './analytics.mjs';
 
@@ -79,31 +79,35 @@ function onCount(tab, data) {
   const tabId = tab.id;
   if (data.addCount !== undefined) {
     counters[tabId] += data.addCount;
-    total += data.addCount;
-    updateCounters(counters[tabId], total, tab.incognito);
+    addToTotal(data.addCount, data.location, tab.incognito);
+    updateCounters(counters[tabId], total);
     return;
   }
 
   if (!data.takeIntoAccount || hrefCounters[fnv1a(data.location.href)] === data.initialCount) {
     counters[tabId] = data.initialCount;
-    updateCounters(counters[tabId], total, tab.incognito);
+    updateCounters(counters[tabId], total);
     return;
   }
 
   hrefCounters[fnv1a(data.location.href)] = data.initialCount;
   counters[tabId] = data.initialCount;
-  total += data.initialCount;
-  updateCounters(counters[tabId], total, tab.incognito);
+  addToTotal(data.initialCount, data.location, tab.incognito);
+  updateCounters(counters[tabId], total);
   return;
 }
 
-function updateCounters(current, total, incognito) {
+function addToTotal(count, location, incognito) {
+  total += count;
+  !incognito && chrome.storage.sync.set({total: total});
+}
+
+function updateCounters(current, total) {
   updateBadge(current);
   chrome.runtime.sendMessage({action: 'update popup counters', data: {
     current: current,
     total: total
   }});
-  !incognito && chrome.storage.sync.set({total: total});
 }
 
 function updateBadge(count) {
