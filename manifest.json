@@ -16,13 +16,7 @@
   ],
   "browser_action": {
     "default_title": "Само Македонија! 👌",
-    "default_popup": "src/popup/popup.html",
-    "default_icon": {
-      "16": "src/assets/toolbar_icon16.png",
-      "32": "src/assets/toolbar_icon32.png",
-      "48": "src/assets/toolbar_icon48.png",
-      "128": "src/assets/toolbar_icon128.png"
-    }
+    "default_popup": "src/popup/popup.html"
   },
   "icons": {
     "16": "src/assets/extension_icon16.png",

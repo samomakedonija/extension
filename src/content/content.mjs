@@ -8,37 +8,36 @@ const CLASS = {
 };
 
 export function run() {
-  let _autoErasing;
+  let _disabled, _autoErasing;
 
   chrome.runtime.onMessage.addListener(request => {
-    if (request.action === 'toggle erasing') {
-      if (_autoErasing === request.data.autoErasing) {
-        return;
-      }
-
-      _autoErasing = request.data.autoErasing;
-      document.body.querySelectorAll('.' + CLASS.CONTENT).forEach(node => {
-        node.classList.toggle(CLASS.HIDE);
-        node.classList.toggle(CLASS.CROSS);
-      });
+    if (request.action !== 'update content state') {
+      return;
     }
 
-    if (request.action === 'toggle extension') {
-      log(request.action);
+    if (_disabled !== request.data.disabled) {
+      _disabled = request.data.disabled;
+      toggleNorthisms(_disabled, _autoErasing);
+    }
+
+    if (_autoErasing !== request.data.autoErasing) {
+      _autoErasing = request.data.autoErasing;
+      toggleErasing();
     }
   });
 
   chrome.runtime.sendMessage({action: 'get state'}, state => {
     init(state.northisms);
     _autoErasing = state.autoErasing;
+    _disabled = state.disabled;
     chrome.runtime.sendMessage({action: 'count', data: {
       location: window.location,
-      initialCount: modifyDom(detectNorthisms(_autoErasing)),
+      initialCount: modifyDom(detectNorthisms(_disabled, _autoErasing)),
       takeIntoAccount: takeIntoAccount()
     }});
 
     observeAddedContent(addedElements => {
-      const addCount = modifyDom(detectNorthisms(_autoErasing, addedElements));
+      const addCount = modifyDom(detectNorthisms(_disabled, _autoErasing, addedElements));
       addCount > 0 && chrome.runtime.sendMessage({action: 'count', data: {
         location: window.location,
         addCount: addCount
@@ -47,10 +46,14 @@ export function run() {
   });
 }
 
-function detectNorthisms(autoErasing, elements) {
+function detectNorthisms(disabled, autoErasing, elements) {
   const
     className = `${CLASS.CONTENT} ${autoErasing ? CLASS.HIDE : CLASS.CROSS}`,
     domMods = [];
+  if (disabled) {
+    return domMods;
+  }
+
   Array.from(
     elements || document.body.getElementsByTagName('*')
   ).forEach(element => element.childNodes.forEach(
@@ -62,6 +65,34 @@ function detectNorthisms(autoErasing, elements) {
   ));
 
   return domMods;
+}
+
+function toggleErasing() {
+  document.body.querySelectorAll('.' + CLASS.CONTENT).forEach(node => {
+    node.classList.toggle(CLASS.HIDE);
+    node.classList.toggle(CLASS.CROSS);
+  });
+}
+
+function toggleNorthisms(disabled, autoErasing) {
+  const nodes = document.body.querySelectorAll('.' + CLASS.CONTENT);
+  if (disabled) {
+    return nodes.forEach(
+      node => node.classList.remove(CLASS.CROSS, CLASS.HIDE)
+    );
+  }
+
+  if (nodes.length) {
+    return nodes.forEach(
+      node => node.classList.add(autoErasing ? CLASS.HIDE : CLASS.CROSS)
+    );
+  }
+
+  chrome.runtime.sendMessage({action: 'count', data: {
+    location: window.location,
+    initialCount: modifyDom(detectNorthisms(disabled, autoErasing)),
+    takeIntoAccount: true
+  }});
 }
 
 function modifyDom(mods) {
