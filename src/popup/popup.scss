@@ -16,6 +16,11 @@
   font-size: 15px;
   color: $color-dark;
 
+  .disabled {
+    pointer-events: none;
+    opacity: 0.33;
+  }
+
   .header {
     display: flex;
     align-items: center;

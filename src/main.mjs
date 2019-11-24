@@ -6,7 +6,8 @@ let
   counters = {},
   hrefCounters = {},
   total,
-  autoErasing;
+  autoErasing,
+  _disabled;
 
 chrome.runtime.onInstalled.addListener(onInstalled);
 
@@ -17,15 +18,17 @@ track('event', {
 });
 
 chrome.storage.sync.get([
-  'total', 'autoErasing'
+  'total', 'autoErasing', 'disabled'
 ], result => {
   total = result.total || 0;
   autoErasing = !!result.autoErasing;
+  _disabled = !!result.disabled;
+  updateIcon(_disabled);
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'count') {
-    onCount(sender.tab, request.data);
+    onCount(_disabled, sender.tab, request.data);
     return;
   }
 
@@ -40,6 +43,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         ));
       });
       sendResponse();
+      return;
+    }
+
+    if (request.data.disabled !== undefined) {
+      chrome.storage.sync.set({disabled: request.data.disabled}, () => {
+        _disabled = request.data.disabled;
+        updateIcon(_disabled);
+        //updateBadge(0, _disabled);
+        updateCounters(0, total);
+        // Probably need to update the popup current counter here.
+        chrome.tabs.query({active: true, currentWindow: true}, tabs => chrome.tabs.sendMessage(
+          tabs[0].id, {action: 'toggle northisms', data: {
+            disabled: _disabled
+          }}
+        ));
+      });
+      sendResponse();
+      return;
     }
 
     return;
@@ -48,9 +69,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'get state') {
     getNorthisms().then(northisms => sendResponse({
       northisms: northisms,
-      current: request.data ? counters[request.data.tabId] : undefined,
+      current: _disabled ? 0 : (request.data ? counters[request.data.tabId] : undefined),
       total: total,
-      autoErasing: autoErasing
+      autoErasing: autoErasing,
+      disabled: _disabled
     }));
     // We wish to send a response asynchronously, so the message channel
     // will be kept open to the other end (caller) until sendResponse is executed.
@@ -67,7 +89,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 chrome.tabs.onActivated.addListener(activeInfo => {
-  updateBadge(counters[activeInfo.tabId] || 0);
+  updateBadge(counters[activeInfo.tabId] || 0, _disabled);
   chrome.tabs.sendMessage(activeInfo.tabId, {action: 'toggle erasing', data: {
     autoErasing: autoErasing
   }});
@@ -75,8 +97,12 @@ chrome.tabs.onActivated.addListener(activeInfo => {
 
 chrome.tabs.onRemoved.addListener(tabId => delete counters[tabId]);
 
-function onCount(tab, data) {
+function onCount(disabled, tab, data) {
   const tabId = tab.id;
+  if (disabled) {
+    return;
+  }
+
   if (data.addCount !== undefined) {
     counters[tabId] += data.addCount;
     addToTotal(data.addCount, data.location, tab.incognito);
@@ -103,15 +129,15 @@ function addToTotal(count, location, incognito) {
 }
 
 function updateCounters(current, total) {
-  updateBadge(current);
+  updateBadge(current, _disabled);
   chrome.runtime.sendMessage({action: 'update popup counters', data: {
     current: current,
     total: total
   }});
 }
 
-function updateBadge(count) {
-  if (count === 0) {
+function updateBadge(count, disabled) {
+  if (count === 0 || disabled) {
     chrome.browserAction.setBadgeText({text: ''});
     return;
   }
@@ -128,6 +154,16 @@ function updateBadge(count) {
     title: 'Никогаш Северна! 👌',
     message: 'Достигнато ново дно'
   }, function(notificationId) {});
+}
+
+function updateIcon(disabled) {
+  const suffix = disabled ? '_disabled' : '';
+  chrome.browserAction.setIcon({path: {
+    16: `assets/toolbar_icon16${suffix}.png`,
+    32: `assets/toolbar_icon32${suffix}.png`,
+    48: `assets/toolbar_icon48${suffix}.png`,
+    128: `assets/toolbar_icon128${suffix}.png`
+  }});
 }
 
 function onInstalled(details) {

@@ -11,21 +11,16 @@ export function run() {
   let _autoErasing;
 
   chrome.runtime.onMessage.addListener(request => {
-    if (request.action === 'toggle erasing') {
-      if (_autoErasing === request.data.autoErasing) {
-        return;
-      }
+    request.action === 'toggle erasing' && toggleErasing(
+      request.data.autoErasing,
+      _autoErasing,
+      autoErasing => _autoErasing = autoErasing
+    );
 
-      _autoErasing = request.data.autoErasing;
-      document.body.querySelectorAll('.' + CLASS.CONTENT).forEach(node => {
-        node.classList.toggle(CLASS.HIDE);
-        node.classList.toggle(CLASS.CROSS);
-      });
-    }
-
-    if (request.action === 'toggle extension') {
-      log(request.action);
-    }
+    request.action === 'toggle northisms' && toggleNorthisms(
+      request.data.disabled,
+      _autoErasing
+    );
   });
 
   chrome.runtime.sendMessage({action: 'get state'}, state => {
@@ -33,12 +28,12 @@ export function run() {
     _autoErasing = state.autoErasing;
     chrome.runtime.sendMessage({action: 'count', data: {
       location: window.location,
-      initialCount: modifyDom(detectNorthisms(_autoErasing)),
+      initialCount: modifyDom(detectNorthisms(state.disabled, _autoErasing)),
       takeIntoAccount: takeIntoAccount()
     }});
 
     observeAddedContent(addedElements => {
-      const addCount = modifyDom(detectNorthisms(_autoErasing, addedElements));
+      const addCount = modifyDom(detectNorthisms(state.disabled, _autoErasing, addedElements));
       addCount > 0 && chrome.runtime.sendMessage({action: 'count', data: {
         location: window.location,
         addCount: addCount
@@ -47,10 +42,14 @@ export function run() {
   });
 }
 
-function detectNorthisms(autoErasing, elements) {
+function detectNorthisms(disabled, autoErasing, elements) {
   const
     className = `${CLASS.CONTENT} ${autoErasing ? CLASS.HIDE : CLASS.CROSS}`,
     domMods = [];
+  if (disabled) {
+    return domMods;
+  }
+
   Array.from(
     elements || document.body.getElementsByTagName('*')
   ).forEach(element => element.childNodes.forEach(
@@ -62,6 +61,39 @@ function detectNorthisms(autoErasing, elements) {
   ));
 
   return domMods;
+}
+
+function toggleErasing(updatedAutoErasing, autoErasing, callbackFn) {
+  if (autoErasing === updatedAutoErasing) {
+    return;
+  }
+
+  document.body.querySelectorAll('.' + CLASS.CONTENT).forEach(node => {
+    node.classList.toggle(CLASS.HIDE);
+    node.classList.toggle(CLASS.CROSS);
+  });
+  callbackFn(updatedAutoErasing);
+}
+
+function toggleNorthisms(omDisabled, autoErasing) {
+  const nodes = document.body.querySelectorAll('.' + CLASS.CONTENT);
+  if (omDisabled) {
+    return nodes.forEach(
+      node => node.classList.remove(CLASS.CROSS, CLASS.HIDE)
+    );
+  }
+
+  if (nodes.length) {
+    return nodes.forEach(
+      node => node.classList.add(autoErasing ? CLASS.HIDE : CLASS.CROSS)
+    );
+  }
+
+  chrome.runtime.sendMessage({action: 'count', data: {
+    location: window.location,
+    initialCount: modifyDom(detectNorthisms(omDisabled, autoErasing)),
+    takeIntoAccount: true
+  }});
 }
 
 function modifyDom(mods) {
