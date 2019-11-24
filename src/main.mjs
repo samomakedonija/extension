@@ -11,21 +11,6 @@ let
 
 chrome.runtime.onInstalled.addListener(onInstalled);
 
-track('event', {
-  eventCategory: 'Extension',
-  eventAction: 'activated',
-  nonInteraction: true
-});
-
-chrome.storage.sync.get([
-  'total', 'autoErasing', 'disabled'
-], result => {
-  total = result.total || 0;
-  _autoErasing = !!result.autoErasing;
-  _disabled = !!result.disabled;
-  updateIcon(_disabled);
-});
-
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'count') {
     onCount(_disabled, sender.tab, request.data);
@@ -48,12 +33,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       chrome.storage.sync.set({disabled: request.data.disabled}, () => {
         _disabled = request.data.disabled;
         updateIcon(_disabled);
-        //updateBadge(0, _disabled);
-        updateCounters(0, total);
-        // Probably need to update the popup current counter here.
-        chrome.tabs.query(
-          {active: true, currentWindow: true}, tabs => updateContentState(tabs[0].id)
-        );
+        chrome.tabs.query({active: true, currentWindow: true}, tabs => {
+          const tabId = tabs[0].id;
+          updateBadge(counters[tabId], _disabled);
+          updateContentState(tabId);
+        });
       });
       sendResponse();
       return;
@@ -85,11 +69,28 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 chrome.tabs.onActivated.addListener(activeInfo => {
-  updateBadge(counters[activeInfo.tabId] || 0, _disabled);
+  updateBadge(counters[activeInfo.tabId], _disabled);
   updateContentState(activeInfo.tabId);
 });
 
 chrome.tabs.onRemoved.addListener(tabId => delete counters[tabId]);
+
+chrome.browserAction.setBadgeBackgroundColor({color: '#696969'});
+
+track('event', {
+  eventCategory: 'Extension',
+  eventAction: 'activated',
+  nonInteraction: true
+});
+
+chrome.storage.sync.get([
+  'total', 'autoErasing', 'disabled'
+], result => {
+  total = result.total || 0;
+  _autoErasing = !!result.autoErasing;
+  _disabled = !!result.disabled;
+  updateIcon(_disabled);
+});
 
 function onCount(disabled, tab, data) {
   const tabId = tab.id;
@@ -131,6 +132,10 @@ function updateContentState(tabId) {
 
 function updateCounters(current, total) {
   updateBadge(current, _disabled);
+  if (!chrome.extension.getViews({type: 'popup'}).length) {
+    return;
+  }
+
   chrome.runtime.sendMessage({action: 'update popup counters', data: {
     current: current,
     total: total
@@ -138,23 +143,9 @@ function updateCounters(current, total) {
 }
 
 function updateBadge(count, disabled) {
-  if (count === 0 || disabled) {
-    chrome.browserAction.setBadgeText({text: ''});
-    return;
-  }
-
-  chrome.browserAction.setBadgeText({text: count.toString()});
-  chrome.browserAction.setBadgeBackgroundColor({color: '#696969'});
-
-  /*
-    Needs "permissions": ["notifications"] in the manifest.
-  */
-  false && chrome.notifications.create(count.toString(), {
-    type: 'basic',
-    iconUrl: 'toolbar_icon128.png',
-    title: 'Никогаш Северна! 👌',
-    message: 'Достигнато ново дно'
-  }, function(notificationId) {});
+  chrome.browserAction.setBadgeText({
+    text: !count || disabled ? '' : count.toString()
+  });
 }
 
 function updateIcon(disabled) {
