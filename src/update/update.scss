@@ -1,0 +1,25 @@
+.om-update {
+
+  $color-red: #b80000;
+  $color-yellow: #fdb515;
+  $color-silver: #ececec;
+
+  font-size: 15px;
+  padding: 40px;
+
+  .header {
+    background: $color-silver;
+    padding: 20px;
+
+    .extension-name {
+      font-weight: bold;
+      text-transform: uppercase;
+      color: $color-red;
+
+      span {
+        color: $color-yellow;
+      }
+    }
+  }
+
+}

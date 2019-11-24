@@ -159,9 +159,20 @@ function updateIcon(disabled) {
 }
 
 function onInstalled(details) {
-  details.reason === 'install' && track('event', {
-    eventCategory: 'Extension',
-    eventAction: 'installed',
-    nonInteraction: true
-  });
+  if (details.reason === 'install') {
+    return track('event', {
+      eventCategory: 'Extension',
+      eventAction: 'installed',
+      nonInteraction: true
+    });
+  }
+
+  if (details.reason === 'update' && !isDevMode()) {
+    track('event', {
+      eventCategory: 'Extension',
+      eventAction: 'updated',
+      nonInteraction: true
+    });
+    return chrome.tabs.create({url: 'src/update/update.html'});
+  }
 }
