@@ -8,32 +8,36 @@ const CLASS = {
 };
 
 export function run() {
-  let _autoErasing;
+  let _disabled, _autoErasing;
 
   chrome.runtime.onMessage.addListener(request => {
-    request.action === 'toggle erasing' && toggleErasing(
-      request.data.autoErasing,
-      _autoErasing,
-      autoErasing => _autoErasing = autoErasing
-    );
+    if (request.action !== 'update content state') {
+      return;
+    }
 
-    request.action === 'toggle northisms' && toggleNorthisms(
-      request.data.disabled,
-      _autoErasing
-    );
+    if (_disabled !== request.data.disabled) {
+      _disabled = request.data.disabled;
+      toggleNorthisms(_disabled, _autoErasing);
+    }
+
+    if (_autoErasing !== request.data.autoErasing) {
+      _autoErasing = request.data.autoErasing;
+      toggleErasing();
+    }
   });
 
   chrome.runtime.sendMessage({action: 'get state'}, state => {
     init(state.northisms);
     _autoErasing = state.autoErasing;
+    _disabled = state.disabled;
     chrome.runtime.sendMessage({action: 'count', data: {
       location: window.location,
-      initialCount: modifyDom(detectNorthisms(state.disabled, _autoErasing)),
+      initialCount: modifyDom(detectNorthisms(_disabled, _autoErasing)),
       takeIntoAccount: takeIntoAccount()
     }});
 
     observeAddedContent(addedElements => {
-      const addCount = modifyDom(detectNorthisms(state.disabled, _autoErasing, addedElements));
+      const addCount = modifyDom(detectNorthisms(_disabled, _autoErasing, addedElements));
       addCount > 0 && chrome.runtime.sendMessage({action: 'count', data: {
         location: window.location,
         addCount: addCount
@@ -63,21 +67,16 @@ function detectNorthisms(disabled, autoErasing, elements) {
   return domMods;
 }
 
-function toggleErasing(updatedAutoErasing, autoErasing, callbackFn) {
-  if (autoErasing === updatedAutoErasing) {
-    return;
-  }
-
+function toggleErasing() {
   document.body.querySelectorAll('.' + CLASS.CONTENT).forEach(node => {
     node.classList.toggle(CLASS.HIDE);
     node.classList.toggle(CLASS.CROSS);
   });
-  callbackFn(updatedAutoErasing);
 }
 
-function toggleNorthisms(omDisabled, autoErasing) {
+function toggleNorthisms(disabled, autoErasing) {
   const nodes = document.body.querySelectorAll('.' + CLASS.CONTENT);
-  if (omDisabled) {
+  if (disabled) {
     return nodes.forEach(
       node => node.classList.remove(CLASS.CROSS, CLASS.HIDE)
     );
@@ -91,7 +90,7 @@ function toggleNorthisms(omDisabled, autoErasing) {
 
   chrome.runtime.sendMessage({action: 'count', data: {
     location: window.location,
-    initialCount: modifyDom(detectNorthisms(omDisabled, autoErasing)),
+    initialCount: modifyDom(detectNorthisms(disabled, autoErasing)),
     takeIntoAccount: true
   }});
 }

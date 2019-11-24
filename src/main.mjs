@@ -6,7 +6,7 @@ let
   counters = {},
   hrefCounters = {},
   total,
-  autoErasing,
+  _autoErasing,
   _disabled;
 
 chrome.runtime.onInstalled.addListener(onInstalled);
@@ -21,7 +21,7 @@ chrome.storage.sync.get([
   'total', 'autoErasing', 'disabled'
 ], result => {
   total = result.total || 0;
-  autoErasing = !!result.autoErasing;
+  _autoErasing = !!result.autoErasing;
   _disabled = !!result.disabled;
   updateIcon(_disabled);
 });
@@ -35,12 +35,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'set state') {
     if (request.data.autoErasing !== undefined) {
       chrome.storage.sync.set({autoErasing: request.data.autoErasing}, () => {
-        autoErasing = request.data.autoErasing;
-        chrome.tabs.query({active: true, currentWindow: true}, tabs => chrome.tabs.sendMessage(
-          tabs[0].id, {action: 'toggle erasing', data: {
-            autoErasing: autoErasing
-          }}
-        ));
+        _autoErasing = request.data.autoErasing;
+        chrome.tabs.query(
+          {active: true, currentWindow: true}, tabs => updateContentState(tabs[0].id)
+        );
       });
       sendResponse();
       return;
@@ -53,11 +51,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         //updateBadge(0, _disabled);
         updateCounters(0, total);
         // Probably need to update the popup current counter here.
-        chrome.tabs.query({active: true, currentWindow: true}, tabs => chrome.tabs.sendMessage(
-          tabs[0].id, {action: 'toggle northisms', data: {
-            disabled: _disabled
-          }}
-        ));
+        chrome.tabs.query(
+          {active: true, currentWindow: true}, tabs => updateContentState(tabs[0].id)
+        );
       });
       sendResponse();
       return;
@@ -71,7 +67,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       northisms: northisms,
       current: _disabled ? 0 : (request.data ? counters[request.data.tabId] : undefined),
       total: total,
-      autoErasing: autoErasing,
+      autoErasing: _autoErasing,
       disabled: _disabled
     }));
     // We wish to send a response asynchronously, so the message channel
@@ -90,9 +86,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 chrome.tabs.onActivated.addListener(activeInfo => {
   updateBadge(counters[activeInfo.tabId] || 0, _disabled);
-  chrome.tabs.sendMessage(activeInfo.tabId, {action: 'toggle erasing', data: {
-    autoErasing: autoErasing
-  }});
+  updateContentState(activeInfo.tabId);
 });
 
 chrome.tabs.onRemoved.addListener(tabId => delete counters[tabId]);
@@ -126,6 +120,13 @@ function onCount(disabled, tab, data) {
 function addToTotal(count, location, incognito) {
   total += count;
   !incognito && chrome.storage.sync.set({total: total});
+}
+
+function updateContentState(tabId) {
+  chrome.tabs.sendMessage(tabId, {action: 'update content state', data: {
+    disabled: _disabled,
+    autoErasing: _autoErasing
+  }});
 }
 
 function updateCounters(current, total) {
