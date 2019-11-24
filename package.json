@@ -2,11 +2,12 @@
   "name": "samo-makedonija",
   "scripts": {
     "preinstall": "ln -sf `pwd`/om.sh /usr/local/bin/om",
-    "postinstall": "(cd node_modules/firebase && cp firebase-app.js firebase-remote-config.js ../../vendor/) && om _sass",
+    "postinstall": "om _vendor && om _sass",
     "build": "npm i",
     "dist": "om clean && om build && om test && om _dist:copy && om _dist:zip && echo '\n'$(ls dist-*.zip) is ready.",
-    "clean": "rm -rf node_modules src/**/*.css dist dist-*.zip",
+    "clean": "rm -rf node_modules src/**/*.css vendor/firebase*.js vendor/marked*.js dist dist-*.zip",
     "test": "jasmine --config=jasmine.json",
+    "_vendor": "cd node_modules && cp firebase/firebase-app.js firebase/firebase-remote-config.js marked/marked.min.js ../vendor/",
     "_sass": "sass --no-source-map src",
     "_dist:copy": "rsync -r --exclude-from 'dist-exclude' manifest.json src vendor dist",
     "_dist:zip": "(cd dist && zip -rq ../dist-$(node -e 'process.stdout.write(require(`./manifest.json`).version);').zip .)"
@@ -15,6 +16,7 @@
     "esm": "^3.2.25",
     "firebase": "^7.5.0",
     "jasmine": "^3.5.0",
-    "jasmine-spec-reporter": "^4.2.1"
+    "jasmine-spec-reporter": "^4.2.1",
+    "marked": "^0.7.0"
   }
 }
