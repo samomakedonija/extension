@@ -5,16 +5,24 @@ import { track } from './analytics.mjs';
 let
   _counters = {},
   _hrefCounters = {},
-  _total,
-  _autoErasing,
-  _disabled;
+  _eh, _total, _autoErasing, _disabled;
 
-export function init() {
-  chrome.runtime.onInstalled.addListener(onRuntimeInstalled);
-  chrome.runtime.onMessage.addListener(onRuntimeMessage);
+export function init(eh) {
+  _eh = eh;
 
-  chrome.tabs.onActivated.addListener(onTabActivated);
-  chrome.tabs.onRemoved.addListener(onTabRemoved);
+  chrome.runtime.onInstalled.addListener(
+    eh.wrap.bind(this, onRuntimeInstalled)
+  );
+  chrome.runtime.onMessage.addListener(
+    eh.wrap.bind(this, onRuntimeMessage)
+  );
+
+  chrome.tabs.onActivated.addListener(
+    eh.wrap.bind(this, onTabActivated)
+  );
+  chrome.tabs.onRemoved.addListener(
+    eh.wrap.bind(this, onTabRemoved)
+  );
 
   chrome.browserAction.setBadgeBackgroundColor({color: '#696969'});
 
@@ -102,11 +110,18 @@ function onRuntimeMessage(request, sender, sendResponse) {
   }
 
   if (request.action === 'track') {
-    return track('pageview', '/' + request.data.page);
+    track('pageview', '/' + request.data.page);
+    return;
   }
 
   if (request.action === 'is dev mode') {
-    return sendResponse(isDevMode());
+    sendResponse(isDevMode());
+    return;
+  }
+
+  if (request.action === 'capture error') {
+    _eh.capture(request.data.err, request.data.context);
+    return;
   }
 }
 

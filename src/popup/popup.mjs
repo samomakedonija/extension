@@ -4,24 +4,33 @@ const
   elToggleErasing = document.getElementById('toggle-erasing'),
   elToggleExtension = document.getElementById('toggle-extension');
 
-chrome.tabs.query({active: true, currentWindow: true}, tabs => chrome.runtime.sendMessage({
-  action: 'get state',
-  data: {tabId: tabs[0].id}
-}, state => {
+export function init(eh) {
+  elToggleErasing.addEventListener('click', eh.wrap.bind(this, toggleErasing));
+  elToggleExtension.addEventListener('click', eh.wrap.bind(this, toggleExtension));
+  chrome.runtime.onMessage.addListener(
+    eh.wrap.bind(this, onRuntimeMessage)
+  );
+
+  chrome.tabs.query({active: true, currentWindow: true}, tabs => chrome.runtime.sendMessage({
+    action: 'get state',
+    data: {tabId: tabs[0].id}
+  }, eh.wrap.bind(this, onGetState)));
+
+  chrome.runtime.sendMessage({action: 'track', data: {page: 'popup'}});
+}
+
+function onRuntimeMessage(message) {
+  if (message.action === 'update popup counters') {
+    updateCounters(message.data);
+  }
+}
+
+function onGetState(state) {
   elToggleErasing.classList.add(state.autoErasing ? 'on': 'off');
   elToggleExtension.classList.add(state.disabled ? 'on': 'off');
   state.disabled && toggleAffectedByDisable();
-
   updateCounters(state);
-  chrome.runtime.onMessage.addListener(
-    message => message.action === 'update popup counters' && updateCounters(message.data)
-  );
-}));
-
-elToggleErasing.addEventListener('click', toggleErasing);
-elToggleExtension.addEventListener('click', toggleExtension);
-
-chrome.runtime.sendMessage({action: 'track', data: {page: 'popup'}});
+}
 
 function toggleErasing() {
   elToggleErasing.classList.toggle('off');
