@@ -1,6 +1,6 @@
 let _northisms = [];
 
-function init(northisms) {
+function initObliterator(northisms) {
   _northisms = northisms || [];
 }
 
@@ -29,4 +29,4 @@ function obliterate(s, className, callback) {
   s !== replacement && callback(replacement);
 }
 
-export { init, obliterate };
+export { initObliterator, obliterate };
