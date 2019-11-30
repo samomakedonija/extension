@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { init, obliterate } = require('esm')(module)('./obliterator.mjs');
+const { initObliterator, obliterate } = require('esm')(module)('./obliterator.mjs');
 
 describe('obliterator', () => {
   const test = (pattern, replacement) => {
@@ -11,7 +11,7 @@ describe('obliterator', () => {
       : expect(spy.callback).not.toHaveBeenCalled();
   };
 
-  beforeAll(() => init(JSON.parse(
+  beforeAll(() => initObliterator(JSON.parse(
     fs.readFileSync('src/northisms.json', 'utf8')
   )));
 

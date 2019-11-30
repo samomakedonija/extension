@@ -3,15 +3,65 @@ import { getNorthisms } from './northisms.mjs';
 import { track } from './analytics.mjs';
 
 let
-  counters = {},
-  hrefCounters = {},
-  total,
-  _autoErasing,
-  _disabled;
+  _counters = {},
+  _hrefCounters = {},
+  _eh, _total, _autoErasing, _disabled;
 
-chrome.runtime.onInstalled.addListener(onInstalled);
+export function init(eh) {
+  _eh = eh;
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  chrome.runtime.onInstalled.addListener(
+    eh.wrap.bind(this, onRuntimeInstalled)
+  );
+  chrome.runtime.onMessage.addListener(
+    eh.wrap.bind(this, onRuntimeMessage)
+  );
+
+  chrome.tabs.onActivated.addListener(
+    eh.wrap.bind(this, onTabActivated)
+  );
+  chrome.tabs.onRemoved.addListener(
+    eh.wrap.bind(this, onTabRemoved)
+  );
+
+  chrome.browserAction.setBadgeBackgroundColor({color: '#696969'});
+
+  chrome.storage.sync.get([
+    'total', 'autoErasing', 'disabled'
+  ], result => {
+    _total = result.total || 0;
+    _autoErasing = !!result.autoErasing;
+    _disabled = !!result.disabled;
+    updateIcon(_disabled);
+  });
+
+  track('event', {
+    eventCategory: 'Extension',
+    eventAction: 'activated',
+    nonInteraction: true
+  });
+}
+
+function onRuntimeInstalled(details) {
+  if (details.reason === 'install') {
+    return track('event', {
+      eventCategory: 'Extension',
+      eventAction: 'installed',
+      nonInteraction: true
+    });
+  }
+
+  if (details.reason === 'update' && !isDevMode()) {
+    track('event', {
+      eventCategory: 'Extension',
+      eventAction: 'updated',
+      nonInteraction: true
+    });
+    return chrome.tabs.create({url: 'src/update/update.html'});
+  }
+}
+
+function onRuntimeMessage(request, sender, sendResponse) {
   if (request.action === 'count') {
     onCount(_disabled, sender.tab, request.data);
     return;
@@ -35,7 +85,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         updateIcon(_disabled);
         chrome.tabs.query({active: true, currentWindow: true}, tabs => {
           const tabId = tabs[0].id;
-          updateBadge(counters[tabId], _disabled);
+          updateBadge(_counters[tabId], _disabled);
           updateContentState(tabId);
         });
       });
@@ -49,8 +99,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'get state') {
     getNorthisms().then(northisms => sendResponse({
       northisms: northisms,
-      current: _disabled ? 0 : (request.data ? counters[request.data.tabId] : undefined),
-      total: total,
+      current: _disabled ? 0 : (request.data ? _counters[request.data.tabId] : undefined),
+      total: _total,
       autoErasing: _autoErasing,
       disabled: _disabled
     }));
@@ -60,37 +110,29 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 
   if (request.action === 'track') {
-    return track('pageview', '/' + request.data.page);
+    track('pageview', '/' + request.data.page);
+    return;
   }
 
   if (request.action === 'is dev mode') {
-    return sendResponse(isDevMode());
+    sendResponse(isDevMode());
+    return;
   }
-});
 
-chrome.tabs.onActivated.addListener(activeInfo => {
-  updateBadge(counters[activeInfo.tabId], _disabled);
+  if (request.action === 'capture error') {
+    _eh.capture(request.data.err, request.data.context);
+    return;
+  }
+}
+
+function onTabActivated(activeInfo) {
+  updateBadge(_counters[activeInfo.tabId], _disabled);
   updateContentState(activeInfo.tabId);
-});
+}
 
-chrome.tabs.onRemoved.addListener(tabId => delete counters[tabId]);
-
-chrome.browserAction.setBadgeBackgroundColor({color: '#696969'});
-
-track('event', {
-  eventCategory: 'Extension',
-  eventAction: 'activated',
-  nonInteraction: true
-});
-
-chrome.storage.sync.get([
-  'total', 'autoErasing', 'disabled'
-], result => {
-  total = result.total || 0;
-  _autoErasing = !!result.autoErasing;
-  _disabled = !!result.disabled;
-  updateIcon(_disabled);
-});
+function onTabRemoved(tabId) {
+  delete _counters[tabId];
+}
 
 function onCount(disabled, tab, data) {
   const tabId = tab.id;
@@ -99,28 +141,29 @@ function onCount(disabled, tab, data) {
   }
 
   if (data.addCount !== undefined) {
-    counters[tabId] += data.addCount;
-    addToTotal(data.addCount, data.location, tab.incognito);
-    updateCounters(counters[tabId], total);
+    _counters[tabId] += data.addCount;
+    _total = setNewTotal(_total, data.addCount, tab.incognito, data.location);
+    updateCounters(_counters[tabId], _total);
     return;
   }
 
-  if (!data.takeIntoAccount || hrefCounters[fnv1a(data.location.href)] === data.initialCount) {
-    counters[tabId] = data.initialCount;
-    updateCounters(counters[tabId], total);
+  if (!data.takeIntoAccount || _hrefCounters[fnv1a(data.location.href)] === data.initialCount) {
+    _counters[tabId] = data.initialCount;
+    updateCounters(_counters[tabId], _total);
     return;
   }
 
-  hrefCounters[fnv1a(data.location.href)] = data.initialCount;
-  counters[tabId] = data.initialCount;
-  addToTotal(data.initialCount, data.location, tab.incognito);
-  updateCounters(counters[tabId], total);
+  _hrefCounters[fnv1a(data.location.href)] = data.initialCount;
+  _counters[tabId] = data.initialCount;
+  _total = setNewTotal(_total, data.initialCount, tab.incognito, data.location);
+  updateCounters(_counters[tabId], _total);
   return;
 }
 
-function addToTotal(count, location, incognito) {
-  total += count;
-  !incognito && chrome.storage.sync.set({total: total});
+function setNewTotal(total, count, incognito, location) {
+  const newTotal = total + count;
+  !incognito && chrome.storage.sync.set({total: newTotal});
+  return newTotal;
 }
 
 function updateContentState(tabId) {
@@ -156,23 +199,4 @@ function updateIcon(disabled) {
     48: `assets/toolbar_icon48${suffix}.png`,
     128: `assets/toolbar_icon128${suffix}.png`
   }});
-}
-
-function onInstalled(details) {
-  if (details.reason === 'install') {
-    return track('event', {
-      eventCategory: 'Extension',
-      eventAction: 'installed',
-      nonInteraction: true
-    });
-  }
-
-  if (details.reason === 'update' && !isDevMode()) {
-    track('event', {
-      eventCategory: 'Extension',
-      eventAction: 'updated',
-      nonInteraction: true
-    });
-    return chrome.tabs.create({url: 'src/update/update.html'});
-  }
 }

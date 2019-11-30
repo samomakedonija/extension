@@ -1,4 +1,4 @@
-import { init, obliterate } from './obliterator.mjs';
+import { initObliterator, obliterate } from './obliterator.mjs';
 import { log } from '../util.mjs';
 
 const CLASS = {
@@ -7,43 +7,53 @@ const CLASS = {
   CROSS: 'om-cross'
 };
 
-export function run() {
-  let _disabled, _autoErasing;
+let _eh, _disabled, _autoErasing;
 
-  chrome.runtime.onMessage.addListener(request => {
-    if (request.action !== 'update content state') {
-      return;
-    }
+export function init(eh) {
+  _eh = eh;
+  chrome.runtime.onMessage.addListener(
+    _eh.wrap.bind(this, onRuntimeMessage)
+  );
 
-    if (_disabled !== request.data.disabled) {
-      _disabled = request.data.disabled;
-      toggleNorthisms(_disabled, _autoErasing);
-    }
+  chrome.runtime.sendMessage(
+    {action: 'get state'}, _eh.wrap.bind(this, onGetState)
+  );
+}
 
-    if (_autoErasing !== request.data.autoErasing) {
-      _autoErasing = request.data.autoErasing;
-      toggleErasing();
-    }
-  });
+function onRuntimeMessage(message) {
+  if (message.action !== 'update content state') {
+    return;
+  }
 
-  chrome.runtime.sendMessage({action: 'get state'}, state => {
-    init(state.northisms);
-    _autoErasing = state.autoErasing;
-    _disabled = state.disabled;
-    chrome.runtime.sendMessage({action: 'count', data: {
+  const data = message.data;
+  if (_disabled !== data.disabled) {
+    _disabled = data.disabled;
+    toggleNorthisms(_disabled, _autoErasing);
+  }
+
+  if (_autoErasing !== data.autoErasing) {
+    _autoErasing = data.autoErasing;
+    toggleErasing();
+  }
+}
+
+function onGetState(state) {
+  initObliterator(state.northisms);
+  _autoErasing = state.autoErasing;
+  _disabled = state.disabled;
+  chrome.runtime.sendMessage({action: 'count', data: {
+    location: window.location,
+    initialCount: modifyDom(detectNorthisms(_disabled, _autoErasing)),
+    takeIntoAccount: takeIntoAccount()
+  }});
+
+  observeAddedContent(_eh.wrap.bind(this, addedElements => {
+    const addCount = modifyDom(detectNorthisms(_disabled, _autoErasing, addedElements));
+    addCount > 0 && chrome.runtime.sendMessage({action: 'count', data: {
       location: window.location,
-      initialCount: modifyDom(detectNorthisms(_disabled, _autoErasing)),
-      takeIntoAccount: takeIntoAccount()
+      addCount: addCount
     }});
-
-    observeAddedContent(addedElements => {
-      const addCount = modifyDom(detectNorthisms(_disabled, _autoErasing, addedElements));
-      addCount > 0 && chrome.runtime.sendMessage({action: 'count', data: {
-        location: window.location,
-        addCount: addCount
-      }});
-    });
-  });
+  }));
 }
 
 function detectNorthisms(disabled, autoErasing, elements) {
