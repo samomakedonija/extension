@@ -1,10 +1,10 @@
-import { fnv1a, isDevMode, log } from './util.mjs';
+import { isDevMode, log } from './util.mjs';
 import { getNorthisms } from './northisms.mjs';
 import { track } from './analytics.mjs';
 
 let
   _counters = {},
-  _hrefCounters = {},
+  _tabState = {},
   _eh, _total, _autoErasing, _disabled;
 
 export function init(eh) {
@@ -132,32 +132,48 @@ function onTabActivated(activeInfo) {
 
 function onTabRemoved(tabId) {
   delete _counters[tabId];
+  delete _tabState[tabId];
 }
 
 function onCount(disabled, tab, data) {
   const tabId = tab.id;
   if (disabled) {
+    delete _tabState[tabId];
     return;
   }
 
   if (data.addCount !== undefined) {
     _counters[tabId] += data.addCount;
     _total = setNewTotal(_total, data.addCount, tab.incognito, data.location);
+    setTabState(tabId, _counters[tabId], data.location.href);
     updateCounters(_counters[tabId], _total);
     return;
   }
 
-  if (!data.takeIntoAccount || _hrefCounters[fnv1a(data.location.href)] === data.initialCount) {
+  if (!data.takeIntoAccount || isSameTabState(tabId, data.initialCount, data.location.href)) {
     _counters[tabId] = data.initialCount;
     updateCounters(_counters[tabId], _total);
     return;
   }
 
-  _hrefCounters[fnv1a(data.location.href)] = data.initialCount;
   _counters[tabId] = data.initialCount;
   _total = setNewTotal(_total, data.initialCount, tab.incognito, data.location);
+  setTabState(tabId, _counters[tabId], data.location.href);
   updateCounters(_counters[tabId], _total);
   return;
+}
+
+function setTabState(tabId, count, href) {
+  _tabState[tabId] = {href: href, count: count};
+}
+
+function isSameTabState(tabId, count, href) {
+  const state = _tabState[tabId];
+  if (!state) {
+    return false;
+  }
+
+  return state.count === count && state.href === href;
 }
 
 function setNewTotal(total, count, incognito, location) {
