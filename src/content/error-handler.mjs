@@ -8,7 +8,7 @@ function init(context) {
 }
 
 function capture(err) {
-  chrome.runtime.sendMessage({action: 'capture error', data: {
+  browser.runtime.sendMessage({action: 'capture error', data: {
     context: _context,
     err: JSON.stringify(err, Object.getOwnPropertyNames(err))
   }});

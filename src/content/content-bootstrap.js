@@ -3,7 +3,7 @@
   eh.init('content');
 
   try {
-    (await import('./content.mjs')).init(eh);
+    await (await import('./content.mjs')).init(eh);
   } catch (e) {
     eh.capture(e);
   }

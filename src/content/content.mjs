@@ -9,14 +9,14 @@ const CLASS = {
 
 let _eh, _disabled, _autoErasing;
 
-export function init(eh) {
+export async function init(eh) {
   _eh = eh;
-  chrome.runtime.onMessage.addListener(
+  browser.runtime.onMessage.addListener(
     _eh.wrap.bind(this, onRuntimeMessage)
   );
 
-  chrome.runtime.sendMessage(
-    {action: 'get state'}, _eh.wrap.bind(this, onGetState)
+  handleState(
+    await browser.runtime.sendMessage({action: 'get state'})
   );
 }
 
@@ -37,11 +37,11 @@ function onRuntimeMessage(message) {
   }
 }
 
-function onGetState(state) {
+function handleState(state) {
   initObliterator(state.northisms);
   _autoErasing = state.autoErasing;
   _disabled = state.disabled;
-  chrome.runtime.sendMessage({action: 'count', data: {
+  browser.runtime.sendMessage({action: 'count', data: {
     location: window.location,
     initialCount: modifyDom(detectNorthisms(_disabled, _autoErasing)),
     takeIntoAccount: takeIntoAccount()
@@ -49,7 +49,7 @@ function onGetState(state) {
 
   observeAddedContent(_eh.wrap.bind(this, addedElements => {
     const addCount = modifyDom(detectNorthisms(_disabled, _autoErasing, addedElements));
-    addCount > 0 && chrome.runtime.sendMessage({action: 'count', data: {
+    addCount > 0 && browser.runtime.sendMessage({action: 'count', data: {
       location: window.location,
       addCount: addCount
     }});
@@ -98,7 +98,7 @@ function toggleNorthisms(disabled, autoErasing) {
     );
   }
 
-  chrome.runtime.sendMessage({action: 'count', data: {
+  browser.runtime.sendMessage({action: 'count', data: {
     location: window.location,
     initialCount: modifyDom(detectNorthisms(disabled, autoErasing)),
     takeIntoAccount: true
