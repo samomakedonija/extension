@@ -7,10 +7,10 @@ let
   _tabState = {},
   _eh, _total, _autoErasing, _disabled;
 
-export function init(eh) {
+export function init(eh, runtimeInstalled) {
   _eh = eh;
 
-  browser.runtime.onInstalled.addListener(
+  runtimeInstalled.then(
     eh.wrap.bind(this, onRuntimeInstalled)
   );
   browser.runtime.onMessage.addListener(
