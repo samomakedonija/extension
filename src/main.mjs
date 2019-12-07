@@ -7,9 +7,12 @@ let
   _tabState = {},
   _eh, _total, _autoErasing, _disabled;
 
-export function init(eh, runtimeInstalled) {
+export function init(eh, runtimeStartup, runtimeInstalled) {
   _eh = eh;
 
+  runtimeStartup.then(
+    eh.wrap.bind(this, onRuntimeStartup)
+  );
   runtimeInstalled.then(
     eh.wrap.bind(this, onRuntimeInstalled)
   );
@@ -34,7 +37,9 @@ export function init(eh, runtimeInstalled) {
     _disabled = !!result.disabled;
     updateIcon(_disabled);
   });
+}
 
+function onRuntimeStartup() {
   track('event', {
     eventCategory: 'Extension',
     eventAction: 'activated',
