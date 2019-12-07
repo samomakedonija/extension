@@ -10,25 +10,25 @@ let
 export function init(eh) {
   _eh = eh;
 
-  chrome.runtime.onInstalled.addListener(
+  browser.runtime.onInstalled.addListener(
     eh.wrap.bind(this, onRuntimeInstalled)
   );
-  chrome.runtime.onMessage.addListener(
+  browser.runtime.onMessage.addListener(
     eh.wrap.bind(this, onRuntimeMessage)
   );
 
-  chrome.tabs.onActivated.addListener(
+  browser.tabs.onActivated.addListener(
     eh.wrap.bind(this, onTabActivated)
   );
-  chrome.tabs.onRemoved.addListener(
+  browser.tabs.onRemoved.addListener(
     eh.wrap.bind(this, onTabRemoved)
   );
 
-  chrome.browserAction.setBadgeBackgroundColor({color: '#696969'});
+  browser.browserAction.setBadgeBackgroundColor({color: '#696969'});
 
-  chrome.storage.sync.get([
+  browser.storage.sync.get([
     'total', 'autoErasing', 'disabled'
-  ], result => {
+  ]).then(result => {
     _total = result.total || 0;
     _autoErasing = !!result.autoErasing;
     _disabled = !!result.disabled;
@@ -57,39 +57,33 @@ function onRuntimeInstalled(details) {
       eventAction: 'updated',
       nonInteraction: true
     });
-    return chrome.tabs.create({url: 'src/update/update.html'});
+    return browser.tabs.create({url: 'src/update/update.html'});
   }
 }
 
-function onRuntimeMessage(request, sender, sendResponse) {
+async function onRuntimeMessage(request, sender) {
   if (request.action === 'count') {
-    onCount(_disabled, sender.tab, request.data);
+    await onCount(_disabled, sender.tab, request.data);
     return;
   }
 
   if (request.action === 'set state') {
     if (request.data.autoErasing !== undefined) {
-      chrome.storage.sync.set({autoErasing: request.data.autoErasing}, () => {
-        _autoErasing = request.data.autoErasing;
-        chrome.tabs.query(
-          {active: true, currentWindow: true}, tabs => updateContentState(tabs[0].id)
-        );
-      });
-      sendResponse();
+      await browser.storage.sync.set({autoErasing: request.data.autoErasing});
+      _autoErasing = request.data.autoErasing;
+      await updateContentState((
+        await browser.tabs.query({active: true, currentWindow: true})
+      )[0].id);
       return;
     }
 
     if (request.data.disabled !== undefined) {
-      chrome.storage.sync.set({disabled: request.data.disabled}, () => {
-        _disabled = request.data.disabled;
-        updateIcon(_disabled);
-        chrome.tabs.query({active: true, currentWindow: true}, tabs => {
-          const tabId = tabs[0].id;
-          updateBadge(_counters[tabId], _disabled);
-          updateContentState(tabId);
-        });
-      });
-      sendResponse();
+      await browser.storage.sync.set({disabled: request.data.disabled});
+      _disabled = request.data.disabled;
+      updateIcon(_disabled);
+      const tabId = (await browser.tabs.query({active: true, currentWindow: true}))[0].id;
+      updateBadge(_counters[tabId], _disabled);
+      await updateContentState(tabId);
       return;
     }
 
@@ -97,16 +91,13 @@ function onRuntimeMessage(request, sender, sendResponse) {
   }
 
   if (request.action === 'get state') {
-    getNorthisms().then(northisms => sendResponse({
-      northisms: northisms,
+    return {
+      northisms: await getNorthisms(),
       current: _disabled ? 0 : (request.data ? _counters[request.data.tabId] : undefined),
       total: _total,
       autoErasing: _autoErasing,
       disabled: _disabled
-    }));
-    // We wish to send a response asynchronously, so the message channel
-    // will be kept open to the other end (caller) until sendResponse is executed.
-    return true;
+    };
   }
 
   if (request.action === 'track') {
@@ -115,8 +106,7 @@ function onRuntimeMessage(request, sender, sendResponse) {
   }
 
   if (request.action === 'is dev mode') {
-    sendResponse(isDevMode());
-    return;
+    return isDevMode();
   }
 
   if (request.action === 'capture error') {
@@ -125,9 +115,9 @@ function onRuntimeMessage(request, sender, sendResponse) {
   }
 }
 
-function onTabActivated(activeInfo) {
+async function onTabActivated(activeInfo) {
   updateBadge(_counters[activeInfo.tabId], _disabled);
-  updateContentState(activeInfo.tabId);
+  await updateContentState(activeInfo.tabId);
 }
 
 function onTabRemoved(tabId) {
@@ -135,7 +125,7 @@ function onTabRemoved(tabId) {
   delete _tabState[tabId];
 }
 
-function onCount(disabled, tab, data) {
+async function onCount(disabled, tab, data) {
   const tabId = tab.id;
   if (disabled) {
     delete _tabState[tabId];
@@ -146,21 +136,20 @@ function onCount(disabled, tab, data) {
     _counters[tabId] += data.addCount;
     _total = setNewTotal(_total, data.addCount, tab.incognito, data.location);
     setTabState(tabId, _counters[tabId], data.location.href);
-    updateCounters(_counters[tabId], _total);
+    await updateCounters(_counters[tabId], _total);
     return;
   }
 
   if (!data.takeIntoAccount || isSameTabState(tabId, data.initialCount, data.location.href)) {
     _counters[tabId] = data.initialCount;
-    updateCounters(_counters[tabId], _total);
+    await updateCounters(_counters[tabId], _total);
     return;
   }
 
   _counters[tabId] = data.initialCount;
   _total = setNewTotal(_total, data.initialCount, tab.incognito, data.location);
   setTabState(tabId, _counters[tabId], data.location.href);
-  updateCounters(_counters[tabId], _total);
-  return;
+  await updateCounters(_counters[tabId], _total);
 }
 
 function setTabState(tabId, count, href) {
@@ -178,38 +167,42 @@ function isSameTabState(tabId, count, href) {
 
 function setNewTotal(total, count, incognito, location) {
   const newTotal = total + count;
-  !incognito && chrome.storage.sync.set({total: newTotal});
+  !incognito && browser.storage.sync.set({total: newTotal});
   return newTotal;
 }
 
-function updateContentState(tabId) {
-  chrome.tabs.sendMessage(tabId, {action: 'update content state', data: {
-    disabled: _disabled,
-    autoErasing: _autoErasing
-  }});
+async function updateContentState(tabId) {
+  try {
+    await browser.tabs.sendMessage(tabId, {action: 'update content state', data: {
+      disabled: _disabled,
+      autoErasing: _autoErasing
+    }});
+  } catch(_) {
+    // Ignore, new/empty tab.
+  }
 }
 
-function updateCounters(current, total) {
+async function updateCounters(current, total) {
   updateBadge(current, _disabled);
-  if (!chrome.extension.getViews({type: 'popup'}).length) {
+  if (!browser.extension.getViews({type: 'popup'}).length) {
     return;
   }
 
-  chrome.runtime.sendMessage({action: 'update popup counters', data: {
+  await browser.runtime.sendMessage({action: 'update popup counters', data: {
     current: current,
     total: total
   }});
 }
 
 function updateBadge(count, disabled) {
-  chrome.browserAction.setBadgeText({
+  browser.browserAction.setBadgeText({
     text: !count || disabled ? '' : count.toString()
   });
 }
 
 function updateIcon(disabled) {
   const suffix = disabled ? '_disabled' : '';
-  chrome.browserAction.setIcon({path: {
+  browser.browserAction.setIcon({path: {
     16: `assets/toolbar_icon16${suffix}.png`,
     32: `assets/toolbar_icon32${suffix}.png`,
     48: `assets/toolbar_icon48${suffix}.png`,

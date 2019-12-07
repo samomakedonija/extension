@@ -26,9 +26,9 @@ function capture(err, context) {
   });
 }
 
-function wrap(fn, ...args) {
+async function wrap(fn, ...args) {
   try {
-    return fn(...args);
+    return await fn(...args);
   } catch (e) {
     capture(e);
   }

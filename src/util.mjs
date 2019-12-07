@@ -1,4 +1,4 @@
-const manifest = chrome.runtime.getManifest();
+const manifest = browser.runtime.getManifest();
 
 function isDevMode() {
   return !('update_url' in manifest);

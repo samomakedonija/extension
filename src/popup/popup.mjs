@@ -4,19 +4,20 @@ const
   elToggleErasing = document.getElementById('toggle-erasing'),
   elToggleExtension = document.getElementById('toggle-extension');
 
-export function init(eh) {
+export async function init(eh) {
   elToggleErasing.addEventListener('click', eh.wrap.bind(this, toggleErasing));
   elToggleExtension.addEventListener('click', eh.wrap.bind(this, toggleExtension));
-  chrome.runtime.onMessage.addListener(
+  browser.runtime.onMessage.addListener(
     eh.wrap.bind(this, onRuntimeMessage)
   );
 
-  chrome.tabs.query({active: true, currentWindow: true}, tabs => chrome.runtime.sendMessage({
-    action: 'get state',
-    data: {tabId: tabs[0].id}
-  }, eh.wrap.bind(this, onGetState)));
+  handleState(
+    await browser.runtime.sendMessage({action: 'get state', data: {
+      tabId: (await browser.tabs.query({active: true, currentWindow: true}))[0].id
+    }})
+  );
 
-  chrome.runtime.sendMessage({action: 'track', data: {page: 'popup'}});
+  browser.runtime.sendMessage({action: 'track', data: {page: 'popup'}});
 }
 
 function onRuntimeMessage(message) {
@@ -25,25 +26,27 @@ function onRuntimeMessage(message) {
   }
 }
 
-function onGetState(state) {
+function handleState(state) {
   elToggleErasing.classList.add(state.autoErasing ? 'on': 'off');
   elToggleExtension.classList.add(state.disabled ? 'on': 'off');
   state.disabled && toggleAffectedByDisable();
   updateCounters(state);
 }
 
-function toggleErasing() {
+async function toggleErasing() {
   elToggleErasing.classList.toggle('off');
-  chrome.runtime.sendMessage({action: 'set state', data: {
+  await browser.runtime.sendMessage({action: 'set state', data: {
     autoErasing: elToggleErasing.classList.toggle('on')
-  }}, () => setTimeout(() => window.close(), 300));
+  }});
+  setTimeout(() => window.close(), 300);
 }
 
-function toggleExtension() {
+async function toggleExtension() {
   elToggleExtension.classList.toggle('off');
-  chrome.runtime.sendMessage({action: 'set state', data: {
+  await browser.runtime.sendMessage({action: 'set state', data: {
     disabled: elToggleExtension.classList.toggle('on')
-  }}, () => setTimeout(() => window.close(), 300));
+  }});
+  setTimeout(() => window.close(), 300);
 }
 
 function toggleAffectedByDisable() {

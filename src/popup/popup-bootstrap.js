@@ -3,7 +3,7 @@
   eh.init('popup');
 
   try {
-    (await import('./popup.mjs')).init(eh);
+    await (await import('./popup.mjs')).init(eh);
   } catch (e) {
     eh.capture(e);
   }
