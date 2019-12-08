@@ -50,7 +50,6 @@ function onRuntimeStartup() {
 
 async function onRuntimeInstalled(details) {
   if (details.reason === 'install') {
-    browser.browserAction.openPopup();
     return track('event', {
       eventCategory: 'Extension',
       eventAction: 'installed',
