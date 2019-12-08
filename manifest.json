@@ -25,6 +25,7 @@
     "128": "src/assets/extension_icon128.png"
   },
   "permissions": [
+    "notifications",
     "storage",
     "tabs"
   ]

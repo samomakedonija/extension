@@ -47,7 +47,7 @@ function onRuntimeStartup() {
   });
 }
 
-function onRuntimeInstalled(details) {
+async function onRuntimeInstalled(details) {
   if (details.reason === 'install') {
     browser.browserAction.openPopup();
     return track('event', {
@@ -58,12 +58,22 @@ function onRuntimeInstalled(details) {
   }
 
   if (details.reason === 'update' && !isDevMode()) {
+    const shownId = await browser.notifications.create({
+      type: 'basic',
+      iconUrl: 'assets/toolbar_icon128.png',
+      title: 'Само Македонија ' + browser.runtime.getManifest().version,
+      message: 'За повеќе информации за надградената верзија притиснете тука.'
+    });
+    browser.notifications.onClicked.addListener(_eh.wrap.bind(this, id => {
+      if (id !== shownId) return;
+      browser.notifications.clear(id);
+      browser.tabs.create({url: 'src/update/update.html'});
+    }));
     track('event', {
       eventCategory: 'Extension',
       eventAction: 'updated',
       nonInteraction: true
     });
-    return browser.tabs.create({url: 'src/update/update.html'});
   }
 }
 
