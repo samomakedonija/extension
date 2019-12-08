@@ -29,7 +29,7 @@ async function capture(fn, ...args) {
   }
 }
 
-function report(err, context) {
+async function report(err, context) {
   if (_context) {
     browser.runtime.sendMessage({action: 'report error', data: {
       context: _context,
@@ -38,14 +38,21 @@ function report(err, context) {
     return;
   }
 
+  const url = (
+    await browser.tabs.query({active: true, currentWindow: true})
+  )[0].url;
   if (!context) {
-    log('error-handler', err) && sentryEnabled && Sentry.captureException(err);
+    log('error-handler', url, err) && sentryEnabled && Sentry.withScope(scope => {
+      url && scope.setExtra('url', url);
+      Sentry.captureException(err);
+    });
     return;
   }
 
   const parsedErr = parseErr(err);
-  log('error-handler', context, parsedErr) && sentryEnabled && Sentry.withScope(scope => {
-    scope.setTag("context", context);
+  log('error-handler', context, url, parsedErr) && sentryEnabled && Sentry.withScope(scope => {
+    scope.setTag('context', context);
+    url && scope.setExtra('url', url);
     Sentry.captureException(parsedErr);
   });
 }
