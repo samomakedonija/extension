@@ -1,10 +1,12 @@
+const context = 'content';
+
 (async () => {
   const
     eh = await import('../error-handler.mjs'),
-    report = eh.init('popup');
+    report = eh.init(context);
 
   try {
-    await (await import('./content.mjs')).init(eh.capture);
+    await (await import(`./${context}.mjs`)).init(eh.capture);
   } catch (e) {
     report(e);
   }

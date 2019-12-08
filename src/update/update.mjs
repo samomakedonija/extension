@@ -1,8 +1,10 @@
 import { log } from '../util.mjs';
 
-getChangelog().then(changelog => document.getElementById('changelog').innerHTML = marked(
-  changelog
-));
+export async function init() {
+  document.getElementById('changelog').innerHTML = marked(
+    await getChangelog()
+  );
+}
 
 async function getChangelog() {
   try {

@@ -1,4 +1,4 @@
-const context = 'popup';
+const context = 'update';
 
 (async () => {
   const
