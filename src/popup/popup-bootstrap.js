@@ -1,10 +1,11 @@
 (async () => {
-  const eh = await import('./error-handler.mjs');
-  eh.init('popup');
+  const
+    eh = await import('../error-handler.mjs'),
+    report = eh.init('popup');
 
   try {
-    await (await import('./popup.mjs')).init(eh);
+    await (await import('./popup.mjs')).init(eh.capture);
   } catch (e) {
-    eh.capture(e);
+    report(e);
   }
 })();

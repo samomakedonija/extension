@@ -4,11 +4,11 @@ const
   elToggleErasing = document.getElementById('toggle-erasing'),
   elToggleExtension = document.getElementById('toggle-extension');
 
-export async function init(eh) {
-  elToggleErasing.addEventListener('click', eh.wrap.bind(this, toggleErasing));
-  elToggleExtension.addEventListener('click', eh.wrap.bind(this, toggleExtension));
+export async function init(capture) {
+  elToggleErasing.addEventListener('click', capture.bind(this, toggleErasing));
+  elToggleExtension.addEventListener('click', capture.bind(this, toggleExtension));
   browser.runtime.onMessage.addListener(
-    eh.wrap.bind(this, onRuntimeMessage)
+    capture.bind(this, onRuntimeMessage)
   );
 
   handleState(

@@ -5,26 +5,27 @@ import { track } from './analytics.mjs';
 let
   _counters = {},
   _tabState = {},
-  _eh, _total, _autoErasing, _disabled;
+  _capture, _report, _total, _autoErasing, _disabled;
 
-export function init(eh, runtimeStartup, runtimeInstalled) {
-  _eh = eh;
+export function init(capture, report, runtimeStartup, runtimeInstalled) {
+  _capture = capture;
+  _report = report;
 
   runtimeStartup.then(
-    eh.wrap.bind(this, onRuntimeStartup)
+    capture.bind(this, onRuntimeStartup)
   );
   runtimeInstalled.then(
-    eh.wrap.bind(this, onRuntimeInstalled)
+    capture.bind(this, onRuntimeInstalled)
   );
   browser.runtime.onMessage.addListener(
-    eh.wrap.bind(this, onRuntimeMessage)
+    capture.bind(this, onRuntimeMessage)
   );
 
   browser.tabs.onActivated.addListener(
-    eh.wrap.bind(this, onTabActivated)
+    capture.bind(this, onTabActivated)
   );
   browser.tabs.onRemoved.addListener(
-    eh.wrap.bind(this, onTabRemoved)
+    capture.bind(this, onTabRemoved)
   );
 
   browser.browserAction.setBadgeBackgroundColor({color: '#696969'});
@@ -64,7 +65,7 @@ async function onRuntimeInstalled(details) {
       title: 'Само Македонија ' + browser.runtime.getManifest().version,
       message: 'За повеќе информации за надградената верзија притиснете тука.'
     });
-    browser.notifications.onClicked.addListener(_eh.wrap.bind(this, id => {
+    browser.notifications.onClicked.addListener(_capture.bind(this, id => {
       if (id !== shownId) return;
       browser.notifications.clear(id);
       browser.tabs.create({url: 'src/update/update.html'});
@@ -125,8 +126,8 @@ async function onRuntimeMessage(request, sender) {
     return isDevMode();
   }
 
-  if (request.action === 'capture error') {
-    _eh.capture(request.data.err, request.data.context);
+  if (request.action === 'report error') {
+    _report(request.data.err, request.data.context);
     return;
   }
 }

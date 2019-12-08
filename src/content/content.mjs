@@ -7,12 +7,12 @@ const CLASS = {
   CROSS: 'om-cross'
 };
 
-let _eh, _disabled, _autoErasing;
+let _capture, _disabled, _autoErasing;
 
-export async function init(eh) {
-  _eh = eh;
+export async function init(capture) {
+  _capture = capture;
   browser.runtime.onMessage.addListener(
-    _eh.wrap.bind(this, onRuntimeMessage)
+    _capture.bind(this, onRuntimeMessage)
   );
 
   handleState(
@@ -47,7 +47,7 @@ function handleState(state) {
     takeIntoAccount: takeIntoAccount()
   }});
 
-  observeAddedContent(_eh.wrap.bind(this, addedElements => {
+  observeAddedContent(_capture.bind(this, addedElements => {
     const addCount = modifyDom(detectNorthisms(_disabled, _autoErasing, addedElements));
     addCount > 0 && browser.runtime.sendMessage({action: 'count', data: {
       location: window.location,
