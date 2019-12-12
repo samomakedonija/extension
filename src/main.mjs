@@ -1,6 +1,13 @@
 import { isDevMode, log } from './util.mjs';
 import { getNorthisms } from './northisms.mjs';
 import { track } from './analytics.mjs';
+import * as badge from './badge.mjs';
+
+const { Subject } = rxjs;
+
+const
+  _tabNorthismsCount = new Subject(),
+  _extensionToggle = new Subject();
 
 let
   _counters = {},
@@ -10,6 +17,8 @@ let
 export function init(capture, report, runtimeStartup, runtimeInstalled) {
   _capture = capture;
   _report = report;
+
+  badge.init(capture, _tabNorthismsCount, _extensionToggle);
 
   runtimeStartup.then(
     capture.bind(this, onRuntimeStartup)
@@ -28,15 +37,13 @@ export function init(capture, report, runtimeStartup, runtimeInstalled) {
     capture.bind(this, onTabRemoved)
   );
 
-  browser.browserAction.setBadgeBackgroundColor({color: '#696969'});
-
   browser.storage.sync.get([
     'total', 'autoErasing', 'disabled'
   ]).then(result => {
     _total = result.total || 0;
     _autoErasing = !!result.autoErasing;
     _disabled = !!result.disabled;
-    updateIcon(_disabled);
+    _extensionToggle.next(!_disabled);
   });
 }
 
@@ -96,9 +103,11 @@ async function onRuntimeMessage(request, sender) {
     if (request.data.disabled !== undefined) {
       await browser.storage.sync.set({disabled: request.data.disabled});
       _disabled = request.data.disabled;
-      updateIcon(_disabled);
+      _extensionToggle.next(!_disabled);
       const tabId = (await browser.tabs.query({active: true, currentWindow: true}))[0].id;
-      updateBadge(_counters[tabId], _disabled);
+      _tabNorthismsCount.next({
+        tabId: tabId, count: _counters[tabId]
+      });
       await updateContentState(tabId);
       return;
     }
@@ -132,8 +141,11 @@ async function onRuntimeMessage(request, sender) {
 }
 
 async function onTabActivated(activeInfo) {
-  updateBadge(_counters[activeInfo.tabId], _disabled);
-  await updateContentState(activeInfo.tabId);
+  const tabId = activeInfo.tabId;
+  _tabNorthismsCount.next({
+    tabId: tabId, count: _counters[tabId]
+  });
+  await updateContentState(tabId);
 }
 
 function onTabRemoved(tabId) {
@@ -152,20 +164,20 @@ async function onCount(disabled, tab, data) {
     _counters[tabId] += data.addCount;
     _total = setNewTotal(_total, data.addCount, tab.incognito, data.location);
     setTabState(tabId, _counters[tabId], data.location.href);
-    await updateCounters(_counters[tabId], _total);
+    await updateCounters(tabId, _counters[tabId], _total);
     return;
   }
 
   if (!data.takeIntoAccount || isSameTabState(tabId, data.initialCount, data.location.href)) {
     _counters[tabId] = data.initialCount;
-    await updateCounters(_counters[tabId], _total);
+    await updateCounters(tabId, _counters[tabId], _total);
     return;
   }
 
   _counters[tabId] = data.initialCount;
   _total = setNewTotal(_total, data.initialCount, tab.incognito, data.location);
   setTabState(tabId, _counters[tabId], data.location.href);
-  await updateCounters(_counters[tabId], _total);
+  await updateCounters(tabId, _counters[tabId], _total);
 }
 
 function setTabState(tabId, count, href) {
@@ -198,8 +210,10 @@ async function updateContentState(tabId) {
   }
 }
 
-async function updateCounters(current, total) {
-  updateBadge(current, _disabled);
+async function updateCounters(tabId, current, total) {
+  _tabNorthismsCount.next({
+    tabId: tabId, count: current
+  });
   if (!browser.extension.getViews({type: 'popup'}).length) {
     return;
   }
@@ -207,21 +221,5 @@ async function updateCounters(current, total) {
   await browser.runtime.sendMessage({action: 'update popup counters', data: {
     current: current,
     total: total
-  }});
-}
-
-function updateBadge(count, disabled) {
-  browser.browserAction.setBadgeText({
-    text: !count || disabled ? '' : count.toString()
-  });
-}
-
-function updateIcon(disabled) {
-  const suffix = disabled ? '_disabled' : '';
-  browser.browserAction.setIcon({path: {
-    16: `assets/toolbar_icon16${suffix}.png`,
-    32: `assets/toolbar_icon32${suffix}.png`,
-    48: `assets/toolbar_icon48${suffix}.png`,
-    128: `assets/toolbar_icon128${suffix}.png`
   }});
 }
