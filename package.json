@@ -13,7 +13,7 @@
     "_dist:zip": "(cd dist && zip -rq ../dist-$(node -e 'process.stdout.write(require(`./manifest.json`).version);').zip .)"
   },
   "devDependencies": {
-    "@sentry/browser": "^5.10.1",
+    "@sentry/browser": "^5.10.2",
     "esm": "^3.2.25",
     "firebase": "^7.5.2",
     "jasmine": "^3.5.0",
