@@ -38,9 +38,9 @@ async function report(err, context) {
     return;
   }
 
-  const url = (
+  const url = ((
     await browser.tabs.query({active: true, currentWindow: true})
-  )[0].url;
+  )[0] || {}).url;
   if (!context) {
     log('error-handler', url, err) && sentryEnabled && Sentry.withScope(scope => {
       url && scope.setExtra('url', url);
@@ -66,4 +66,4 @@ function parseErr(err) {
   }
 }
 
-export { init, capture };
+export { init, capture, report };

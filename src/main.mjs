@@ -2,6 +2,7 @@ import { isDevMode, log } from './util.mjs';
 import { getNorthisms } from './northisms.mjs';
 import { track } from './analytics.mjs';
 import * as badge from './badge.mjs';
+import * as eh from './error-handler.mjs';
 
 const { Subject } = rxjs;
 
@@ -12,29 +13,33 @@ const
 let
   _counters = {},
   _tabState = {},
-  _capture, _report, _total, _autoErasing, _disabled;
+  _total, _autoErasing, _disabled;
 
-export function init(capture, report, runtimeStartup, runtimeInstalled) {
-  _capture = capture;
-  _report = report;
+eh.init();
+eh.capture(init.bind(
+  this,
+  new Promise(resolve => browser.runtime.onStartup.addListener(resolve)),
+  new Promise(resolve => browser.runtime.onInstalled.addListener(resolve))
+));
 
-  badge.init(capture, _tabNorthismsCount, _extensionToggle);
+function init(runtimeStartup, runtimeInstalled) {
+  badge.init(eh.capture, _tabNorthismsCount, _extensionToggle);
 
   runtimeStartup.then(
-    capture.bind(this, onRuntimeStartup)
+    eh.capture.bind(this, onRuntimeStartup)
   );
   runtimeInstalled.then(
-    capture.bind(this, onRuntimeInstalled)
+    eh.capture.bind(this, onRuntimeInstalled)
   );
   browser.runtime.onMessage.addListener(
-    capture.bind(this, onRuntimeMessage)
+    eh.capture.bind(this, onRuntimeMessage)
   );
 
   browser.tabs.onActivated.addListener(
-    capture.bind(this, onTabActivated)
+    eh.capture.bind(this, onTabActivated)
   );
   browser.tabs.onRemoved.addListener(
-    capture.bind(this, onTabRemoved)
+    eh.capture.bind(this, onTabRemoved)
   );
 
   browser.storage.sync.get([
@@ -71,7 +76,7 @@ async function onRuntimeInstalled(details) {
       title: 'Само Македонија ' + browser.runtime.getManifest().version,
       message: 'За повеќе информации за надградената верзија притиснете тука.'
     });
-    browser.notifications.onClicked.addListener(_capture.bind(this, id => {
+    browser.notifications.onClicked.addListener(eh.capture.bind(this, id => {
       if (id !== shownId) return;
       browser.notifications.clear(id);
       browser.tabs.create({url: 'src/update/update.html'});
@@ -135,7 +140,7 @@ async function onRuntimeMessage(request, sender) {
   }
 
   if (request.action === 'report error') {
-    _report(request.data.err, request.data.context);
+    eh.report(request.data.err, request.data.context);
     return;
   }
 }

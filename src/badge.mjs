@@ -11,7 +11,8 @@ export function clear() {
 }
 
 async function onTabNorthismsCount(state) {
-  if (state.tabId !== (await browser.tabs.query({currentWindow: true, active: true}))[0].id) {
+  const activeTabId = ((await browser.tabs.query({currentWindow: true, active: true}))[0] || {}).id;
+  if (activeTabId === undefined || activeTabId !== state.tabId) {
     return;
   }
 
