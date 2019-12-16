@@ -36,6 +36,9 @@ export function init(capture, report, runtimeStartup, runtimeInstalled) {
   browser.tabs.onRemoved.addListener(
     capture.bind(this, onTabRemoved)
   );
+  browser.tabs.onUpdated.addListener(
+    capture.bind(this, onTabUpdated)
+  );
 
   browser.storage.sync.get([
     'total', 'autoErasing', 'disabled'
@@ -151,6 +154,10 @@ async function onTabActivated(activeInfo) {
 function onTabRemoved(tabId) {
   delete _counters[tabId];
   delete _tabState[tabId];
+}
+
+function onTabUpdated(tabId, changeInfo, tab) {
+  changeInfo.url && tab.active && badge.clear();
 }
 
 async function onCount(disabled, tab, data) {
