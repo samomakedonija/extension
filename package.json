@@ -13,13 +13,13 @@
     "_dist:zip": "(cd dist && zip -rq ../dist-$(node -e 'process.stdout.write(require(`./manifest.json`).version);').zip .)"
   },
   "devDependencies": {
-    "@sentry/browser": "^5.10.2",
+    "@sentry/browser": "^6.2.5",
     "esm": "^3.2.25",
-    "firebase": "^7.6.0",
-    "jasmine": "^3.5.0",
-    "jasmine-spec-reporter": "^4.2.1",
-    "marked": "^0.8.0",
-    "rxjs": "^6.5.3",
-    "webextension-polyfill": "^0.5.0"
+    "firebase": "^8.3.3",
+    "jasmine": "^3.7.0",
+    "jasmine-spec-reporter": "^7.0.0",
+    "marked": "^2.0.3",
+    "rxjs": "^6.6.7",
+    "webextension-polyfill": "^0.7.0"
   }
 }
