@@ -19,7 +19,7 @@
     "jasmine": "^3.5.0",
     "jasmine-spec-reporter": "^4.2.1",
     "marked": "^0.8.0",
-    "rxjs": "^6.5.3",
+    "rxjs": "^6.6.7",
     "webextension-polyfill": "^0.7.0"
   }
 }
