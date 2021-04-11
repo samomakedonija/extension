@@ -16,7 +16,7 @@
     "@sentry/browser": "^6.2.5",
     "esm": "^3.2.25",
     "firebase": "^8.3.3",
-    "jasmine": "^3.5.0",
+    "jasmine": "^3.7.0",
     "jasmine-spec-reporter": "^4.2.1",
     "marked": "^2.0.3",
     "rxjs": "^6.6.7",
