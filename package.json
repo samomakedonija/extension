@@ -18,7 +18,7 @@
     "firebase": "^8.3.3",
     "jasmine": "^3.7.0",
     "jasmine-spec-reporter": "^7.0.0",
-    "marked": "^2.0.3",
+    "marked": "^4.0.10",
     "rxjs": "^6.6.7",
     "webextension-polyfill": "^0.7.0"
   }
